@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Patient, TriageLevel, Vitals } from '@/types/patient';
+import { Patient, TriageLevel, Vitals, Hospital } from '@/types/patient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,15 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LiveVitalsDisplay } from './LiveVitalsDisplay';
 import { SymptomDropdown } from './SymptomDropdown';
 import { useApp } from '@/contexts/AppContext';
-import { Send } from 'lucide-react';
+import { Send, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PatientFormProps {
   triageLevel: TriageLevel;
   onClose: () => void;
+  ambulanceLocation: { lat: number; lng: number };
+  selectedHospital: Hospital | null;
 }
 
-export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
+export const PatientForm = ({ triageLevel, onClose, ambulanceLocation, selectedHospital }: PatientFormProps) => {
   const { patients, addPatient, sendAlert } = useApp();
   const [isNewPatient, setIsNewPatient] = useState(true);
   const [selectedPatientId, setSelectedPatientId] = useState('');
@@ -39,6 +41,14 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const handleSendAlert = () => {
+    if (!selectedHospital) {
+      toast.error('Please select a hospital first', {
+        description: 'Use the hospital selector to choose a destination',
+        icon: <AlertCircle className="w-4 h-4" />,
+      });
+      return;
+    }
+
     let patientData: Patient;
 
     if (isNewPatient) {
@@ -67,12 +77,12 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
       patientData = { ...selectedPatient, vitals, triageLevel };
     }
 
-    const hospital = sendAlert(patientData, `AMB${Math.floor(Math.random() * 900) + 100}`);
+    const hospital = sendAlert(patientData, `AMB${Math.floor(Math.random() * 900) + 100}`, ambulanceLocation);
     
     toast.success(
-      `Pre-alert sent to ${hospital.name} – ${hospital.distance} km away`,
+      `Pre-alert sent to ${selectedHospital.name}`,
       {
-        description: `ETA: ${Math.floor(Math.random() * 10) + 5} minutes`,
+        description: `Patient: ${patientData.name} | ETA: ${Math.floor(Math.random() * 10) + 5} minutes`,
         duration: 5000,
       }
     );

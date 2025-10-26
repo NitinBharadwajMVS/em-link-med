@@ -1,14 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { AlertCard } from '@/components/hospital/AlertCard';
+import { AlertMap } from '@/components/hospital/AlertMap';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Building2, AlertTriangle, Activity, CheckCircle } from 'lucide-react';
+import { Building2, AlertTriangle, Activity, CheckCircle, MapIcon } from 'lucide-react';
 import { playAlertSound } from '@/utils/alertSounds';
 
 const HospitalDashboard = () => {
   const { alerts } = useApp();
   const previousAlertCount = useRef(alerts.length);
+  
+  // Hospital location (NYC area - CityCare Hospital)
+  const hospitalLocation = { lat: 40.7580, lng: -73.9855 };
 
   const criticalCount = alerts.filter(a => a.patient.triageLevel === 'critical' && a.status === 'pending').length;
   const urgentCount = alerts.filter(a => a.patient.triageLevel === 'urgent' && a.status === 'pending').length;
@@ -66,6 +70,14 @@ const HospitalDashboard = () => {
             </div>
           </Card>
         </div>
+
+        <Card className="p-6 mb-8 glass-effect animate-fade-in">
+          <div className="flex items-center gap-2 mb-4">
+            <MapIcon className="w-5 h-5 text-primary" />
+            <h3 className="text-xl font-bold">Live Ambulance Tracking</h3>
+          </div>
+          <AlertMap alerts={alerts} hospitalLocation={hospitalLocation} />
+        </Card>
 
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Incoming Alerts</h2>

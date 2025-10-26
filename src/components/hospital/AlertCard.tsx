@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Activity, Clock, User, Phone, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Activity, Clock, User, Phone, ChevronDown, ChevronUp, Check, X, Package } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 
@@ -30,7 +30,16 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
 
   const handleAccept = () => {
     updateAlertStatus(alert.id, 'accepted');
-    toast.success('Patient case accepted');
+    toast.success('Patient case accepted', {
+      description: `${patient.name} will arrive in ${alert.eta} minutes`,
+    });
+  };
+
+  const handleReject = () => {
+    updateAlertStatus(alert.id, 'rejected');
+    toast.error('Case rejected - Ambulance will be notified', {
+      description: 'They will select an alternative hospital',
+    });
   };
 
   return (
@@ -77,6 +86,22 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
         <div className="text-sm font-semibold text-muted-foreground mb-1">Chief Complaint</div>
         <div className="font-medium">{patient.complaint}</div>
       </div>
+
+      {alert.requiredEquipment && alert.requiredEquipment.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-2">
+            <Package className="w-4 h-4" />
+            Required Equipment
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {alert.requiredEquipment.map((equipment) => (
+              <Badge key={equipment} variant="outline" className="text-xs">
+                {equipment}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-3 mb-4 text-center">
         <div className="p-2 bg-card rounded-lg">
@@ -139,15 +164,21 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
         </Button>
         {alert.status === 'pending' && (
           <>
-            <Button onClick={handleAcknowledge} variant="secondary" className="flex-1">
-              <Activity className="w-4 h-4 mr-2" />
-              Acknowledge
+            <Button onClick={handleReject} variant="destructive" className="flex-1">
+              <X className="w-4 h-4 mr-2" />
+              Cannot Accept
             </Button>
             <Button onClick={handleAccept} className="flex-1 bg-stable hover:bg-stable/90">
               <Check className="w-4 h-4 mr-2" />
-              Accept
+              Accept Case
             </Button>
           </>
+        )}
+        {alert.status === 'acknowledged' && (
+          <Button onClick={handleAccept} className="flex-1 bg-stable hover:bg-stable/90">
+            <Check className="w-4 h-4 mr-2" />
+            Accept Case
+          </Button>
         )}
       </div>
     </Card>

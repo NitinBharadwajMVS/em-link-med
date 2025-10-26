@@ -1,21 +1,35 @@
 import { useState } from 'react';
 import { TriageButton } from '@/components/ambulance/TriageButton';
 import { PatientForm } from '@/components/ambulance/PatientForm';
-import { TriageLevel } from '@/types/patient';
+import { HospitalSelector } from '@/components/ambulance/HospitalSelector';
+import { RouteMap } from '@/components/ambulance/RouteMap';
+import { TriageLevel, Hospital } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Ambulance } from 'lucide-react';
+import { LogOut, Ambulance, MapPin } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { calculateRoute } from '@/utils/routeService';
 
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
-  const { logout } = useApp();
+  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  const { logout, hospitals } = useApp();
   const navigate = useNavigate();
+  
+  // Simulated ambulance location (NYC area)
+  const ambulanceLocation = { lat: 40.7489, lng: -73.9876 };
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleSelectHospital = async (hospital: Hospital) => {
+    setSelectedHospital(hospital);
+    const route = await calculateRoute(ambulanceLocation, hospital.coordinates);
+    setRouteCoordinates(route.coordinates);
   };
 
   return (
@@ -77,9 +91,38 @@ const AmbulanceDashboard = () => {
                 Close
               </Button>
             </div>
-            <PatientForm triageLevel={selectedTriage} onClose={() => setSelectedTriage(null)} />
+            <PatientForm 
+              triageLevel={selectedTriage} 
+              onClose={() => setSelectedTriage(null)}
+              ambulanceLocation={ambulanceLocation}
+              selectedHospital={selectedHospital}
+            />
           </Card>
         )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          <Card className="p-6 bg-ambulance-card border-ambulance-border animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h3 className="text-xl font-bold text-ambulance-text">Route Navigation</h3>
+            </div>
+            <RouteMap
+              ambulanceLocation={ambulanceLocation}
+              hospitals={hospitals}
+              selectedHospital={selectedHospital || undefined}
+              routeCoordinates={routeCoordinates}
+            />
+          </Card>
+
+          <Card className="p-6 bg-ambulance-card border-ambulance-border animate-fade-in">
+            <HospitalSelector
+              hospitals={hospitals}
+              ambulanceLocation={ambulanceLocation}
+              onSelectHospital={handleSelectHospital}
+              selectedHospitalId={selectedHospital?.id}
+            />
+          </Card>
+        </div>
       </div>
     </div>
   );
