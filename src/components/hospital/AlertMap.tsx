@@ -1,3 +1,4 @@
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Alert } from '@/types/patient';
@@ -9,35 +10,22 @@ interface AlertMapProps {
   hospitalLocation: { lat: number; lng: number };
 }
 
-const criticalIcon = L.icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZGMzNTQ1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggZD0iTTggMjBoMiIvPjxwYXRoIGQ9Ik0xNCAyMGgyIi8+PHBhdGggZD0iTTEwIDE2aDQiLz48cGF0aCBkPSJNMTMgMi41IDUuNzMgOWMtLjUuNC0uNzMuOS0uNzMgMS41djYuNWEyIDIgMCAwIDAgMiAyaDEyYTIgMiAwIDAgMCAyLTJ2LTYuNWMwLS42LS4yMy0xLjEtLjczLTEuNUwxMyAyLjVhMiAyIDAgMCAwLTIgMFoiLz48L3N2Zz4=',
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
-});
+// Simple colored circle markers
+const createMarker = (color: string, size: number) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+};
 
-const urgentIcon = L.icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZjU5ZTBiIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggZD0iTTggMjBoMiIvPjxwYXRoIGQ9Ik0xNCAyMGgyIi8+PHBhdGggZD0iTTEwIDE2aDQiLz48cGF0aCBkPSJNMTMgMi41IDUuNzMgOWMtLjUuNC0uNzMuOS0uNzMgMS41djYuNWEyIDIgMCAwIDAgMiAyaDEyYTIgMiAwIDAgMCAyLTJ2LTYuNWMwLS42LS4yMy0xLjEtLjczLTEuNUwxMyAyLjVhMiAyIDAgMCAwLTIgMFoiLz48L3N2Zz4=',
-  iconSize: [28, 28],
-  iconAnchor: [14, 28],
-  popupAnchor: [0, -28],
-});
+const criticalIcon = createMarker('#dc2626', 32);
+const urgentIcon = createMarker('#f59e0b', 28);
+const stableIcon = createMarker('#10b981', 24);
+const hospitalIcon = createMarker('#3b82f6', 40);
 
-const stableIcon = L.icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjMTBiOTgxIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggZD0iTTggMjBoMiIvPjxwYXRoIGQ9Ik0xNCAyMGgyIi8+PHBhdGggZD0iTTEwIDE2aDQiLz48cGF0aCBkPSJNMTMgMi41IDUuNzMgOWMtLjUuNC0uNzMuOS0uNzMgMS41djYuNWEyIDIgMCAwIDAgMiAyaDEyYTIgMiAwIDAgMCAyLTJ2LTYuNWMwLS42LS4yMy0xLjEtLjczLTEuNUwxMyAyLjVhMiAyIDAgMCAwLTIgMFoiLz48L3N2Zz4=',
-  iconSize: [24, 24],
-  iconAnchor: [12, 24],
-  popupAnchor: [0, -24],
-});
-
-const hospitalIcon = L.icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjM2I4MmY2IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggZD0iTTEyIDZ2MTIiLz48cGF0aCBkPSJNNiAxMmgxMiIvPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiLz48L3N2Zz4=',
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -40],
-});
-
-function getIconForTriage(triage: string): L.Icon {
+function getIconForTriage(triage: string): L.DivIcon {
   switch (triage) {
     case 'critical':
       return criticalIcon;
@@ -50,7 +38,7 @@ function getIconForTriage(triage: string): L.Icon {
   }
 }
 
-export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
+export const AlertMap: React.FC<AlertMapProps> = ({ alerts, hospitalLocation }) => {
   const alertsWithLocation = alerts.filter(alert => alert.ambulanceLocation);
 
   return (
@@ -58,11 +46,12 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
       <MapContainer
         center={[hospitalLocation.lat, hospitalLocation.lng]}
         zoom={12}
+        scrollWheelZoom={true}
         className="w-full h-full"
       >
         <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
 
         <Marker 
@@ -70,9 +59,7 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
           icon={hospitalIcon}
         >
           <Popup>
-            <div className="text-center font-semibold">
-              Your Hospital
-            </div>
+            <strong>Your Hospital</strong>
           </Popup>
         </Marker>
 
@@ -83,9 +70,9 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
             icon={getIconForTriage(alert.patient.triageLevel)}
           >
             <Popup>
-              <div className="space-y-2 min-w-[200px]">
-                <div className="font-semibold flex items-center gap-2">
-                  {alert.ambulanceId}
+              <div style={{ minWidth: '200px' }}>
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>{alert.ambulanceId}</strong>
                   <Badge
                     variant={
                       alert.patient.triageLevel === 'critical'
@@ -94,17 +81,24 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
                         ? 'default'
                         : 'secondary'
                     }
+                    style={{ marginLeft: '8px' }}
                   >
                     {alert.patient.triageLevel}
                   </Badge>
                 </div>
-                <div className="text-sm space-y-1">
-                  <div><strong>Patient:</strong> {alert.patient.name}</div>
-                  <div><strong>Age:</strong> {alert.patient.age}</div>
-                  <div><strong>ETA:</strong> {alert.eta} min</div>
-                  <div><strong>Complaint:</strong> {alert.patient.complaint}</div>
+                <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+                  <strong>Patient:</strong> {alert.patient.name}
                 </div>
-                <div className="text-xs space-y-1 border-t pt-2">
+                <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+                  <strong>Age:</strong> {alert.patient.age}
+                </div>
+                <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+                  <strong>ETA:</strong> {alert.eta} min
+                </div>
+                <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+                  <strong>Complaint:</strong> {alert.patient.complaint}
+                </div>
+                <div style={{ fontSize: '12px', borderTop: '1px solid #e5e7eb', paddingTop: '8px' }}>
                   <div><strong>SpO2:</strong> {alert.patient.vitals.spo2}%</div>
                   <div><strong>HR:</strong> {alert.patient.vitals.heartRate} bpm</div>
                   <div><strong>BP:</strong> {alert.patient.vitals.bloodPressureSys}/{alert.patient.vitals.bloodPressureDia}</div>
