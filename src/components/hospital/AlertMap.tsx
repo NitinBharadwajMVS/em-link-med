@@ -56,7 +56,6 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
   return (
     <div className="w-full h-[400px] rounded-lg overflow-hidden border-2 border-border shadow-lg">
       <MapContainer
-        key={`${hospitalLocation.lat}-${hospitalLocation.lng}`}
         center={[hospitalLocation.lat, hospitalLocation.lng]}
         zoom={12}
         className="w-full h-full"

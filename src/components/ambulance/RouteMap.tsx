@@ -39,23 +39,11 @@ export const RouteMap = ({
   selectedHospital,
   routeCoordinates 
 }: RouteMapProps) => {
-  // Calculate center and bounds
-  const allPoints: L.LatLngTuple[] = [
-    [ambulanceLocation.lat, ambulanceLocation.lng],
-    ...hospitals.map(h => [h.coordinates.lat, h.coordinates.lng] as L.LatLngTuple),
-  ];
-
-  const bounds = L.latLngBounds(allPoints);
-  const center = bounds.getCenter();
-
   return (
     <div className="w-full h-[500px] rounded-lg overflow-hidden border-2 border-ambulance-border shadow-xl">
       <MapContainer
-        key={`${center.lat}-${center.lng}`}
-        center={[center.lat, center.lng]}
+        center={[ambulanceLocation.lat, ambulanceLocation.lng]}
         zoom={12}
-        bounds={bounds}
-        boundsOptions={{ padding: [50, 50] }}
         className="w-full h-full"
         style={{ background: '#1a1f2e' }}
       >
