@@ -7,9 +7,8 @@ interface AppContextType {
   hospitals: Hospital[];
   currentUser: string | null;
   addPatient: (patient: Patient) => void;
-  sendAlert: (alertData: Partial<Alert> & { patient: Patient; ambulanceId: string; hospitalId: string }) => void;
-  updateAlertStatus: (alertId: string, status: 'acknowledged' | 'accepted' | 'declined') => void;
-  updateHospitalStatus: (hospitalId: string, status: 'available' | 'unavailable') => void;
+  sendAlert: (patient: Patient, ambulanceId: string) => Hospital;
+  updateAlertStatus: (alertId: string, status: 'acknowledged' | 'accepted') => void;
   login: (userId: string) => void;
   logout: () => void;
 }
@@ -17,33 +16,9 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const mockHospitals: Hospital[] = [
-  {
-    id: '1',
-    name: 'CityCare Hospital',
-    coordinates: { lat: 40.7489, lng: -73.9680 },
-    address: '123 Main St, New York, NY',
-    contact: '+1-212-555-0100',
-    equipment: ['CT Scanner', 'MRI', 'Trauma Unit', 'ICU'],
-    status: 'available',
-  },
-  {
-    id: '2',
-    name: 'General Medical Center',
-    coordinates: { lat: 40.7520, lng: -73.9700 },
-    address: '456 Oak Ave, New York, NY',
-    contact: '+1-212-555-0200',
-    equipment: ['Emergency Room', 'Surgery', 'ICU', 'Lab'],
-    status: 'available',
-  },
-  {
-    id: '3',
-    name: 'Emergency Care Unit',
-    coordinates: { lat: 40.7450, lng: -73.9650 },
-    address: '789 Pine Rd, New York, NY',
-    contact: '+1-212-555-0300',
-    equipment: ['Trauma Center', 'Burn Unit', 'ICU'],
-    status: 'available',
-  },
+  { id: '1', name: 'CityCare Hospital', distance: 1.4, address: '123 Main St' },
+  { id: '2', name: 'General Medical Center', distance: 1.8, address: '456 Oak Ave' },
+  { id: '3', name: 'Emergency Care Unit', distance: 2.1, address: '789 Pine Rd' },
 ];
 
 const mockPatients: Patient[] = [
@@ -78,36 +53,31 @@ const mockPatients: Patient[] = [
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [patients, setPatients] = useState<Patient[]>(mockPatients);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [hospitals, setHospitals] = useState<Hospital[]>(mockHospitals);
+  const [hospitals] = useState<Hospital[]>(mockHospitals);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   const addPatient = (patient: Patient) => {
     setPatients((prev) => [...prev, patient]);
   };
 
-  const sendAlert = (alertData: Partial<Alert> & { patient: Patient; ambulanceId: string; hospitalId: string }) => {
+  const sendAlert = (patient: Patient, ambulanceId: string): Hospital => {
+    const nearestHospital = hospitals[Math.floor(Math.random() * hospitals.length)];
     const newAlert: Alert = {
       id: `A${Date.now()}`,
+      patient,
+      ambulanceId,
+      eta: Math.floor(Math.random() * 15) + 5,
       status: 'pending',
+      hospitalId: nearestHospital.id,
       timestamp: new Date().toISOString(),
-      ambulanceContact: '+1-555-AMBULANCE',
-      ambulanceEquipment: ['Defibrillator', 'Oxygen', 'Medications'],
-      eta: 10,
-      distance: 1500,
-      ...alertData,
     };
     setAlerts((prev) => [...prev, newAlert]);
+    return nearestHospital;
   };
 
-  const updateAlertStatus = (alertId: string, status: 'acknowledged' | 'accepted' | 'declined') => {
+  const updateAlertStatus = (alertId: string, status: 'acknowledged' | 'accepted') => {
     setAlerts((prev) =>
       prev.map((alert) => (alert.id === alertId ? { ...alert, status } : alert))
-    );
-  };
-
-  const updateHospitalStatus = (hospitalId: string, status: 'available' | 'unavailable') => {
-    setHospitals((prev) =>
-      prev.map((hospital) => (hospital.id === hospitalId ? { ...hospital, status } : hospital))
     );
   };
 
@@ -129,7 +99,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         addPatient,
         sendAlert,
         updateAlertStatus,
-        updateHospitalStatus,
         login,
         logout,
       }}

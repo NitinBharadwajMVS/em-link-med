@@ -39,8 +39,45 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const handleSendAlert = () => {
-    toast.info('Please use the map interface to select a hospital and send pre-alert');
-    onClose();
+    let patientData: Patient;
+
+    if (isNewPatient) {
+      if (!formData.name || !formData.age || !formData.complaint) {
+        toast.error('Please fill all required fields');
+        return;
+      }
+
+      patientData = {
+        id: `P${Date.now()}`,
+        name: formData.name,
+        age: parseInt(formData.age),
+        gender: formData.gender as 'male' | 'female' | 'other',
+        contact: formData.contact,
+        vitals,
+        complaint: formData.complaint,
+        triageLevel,
+        timestamp: new Date().toISOString(),
+      };
+      addPatient(patientData);
+    } else {
+      if (!selectedPatient) {
+        toast.error('Please select a patient');
+        return;
+      }
+      patientData = { ...selectedPatient, vitals, triageLevel };
+    }
+
+    const hospital = sendAlert(patientData, `AMB${Math.floor(Math.random() * 900) + 100}`);
+    
+    toast.success(
+      `Pre-alert sent to ${hospital.name} – ${hospital.distance} km away`,
+      {
+        description: `ETA: ${Math.floor(Math.random() * 10) + 5} minutes`,
+        duration: 5000,
+      }
+    );
+
+    setTimeout(onClose, 1500);
   };
 
   return (
