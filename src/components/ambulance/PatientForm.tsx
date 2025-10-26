@@ -3,9 +3,9 @@ import { Patient, TriageLevel, Vitals } from '@/types/patient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LiveVitalsDisplay } from './LiveVitalsDisplay';
+import { SymptomDropdown } from './SymptomDropdown';
 import { useApp } from '@/contexts/AppContext';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
     gender: 'male',
     contact: '',
     complaint: '',
+    complaintCategory: '',
   });
   const [vitals, setVitals] = useState<Vitals>({
     spo2: 98,
@@ -129,7 +130,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
       {isNewPatient && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Name *</Label>
+            <Label>Name</Label>
             <Input
               className="bg-ambulance-card border-ambulance-border"
               value={formData.name}
@@ -137,7 +138,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             />
           </div>
           <div>
-            <Label>Age *</Label>
+            <Label>Age</Label>
             <Input
               type="number"
               className="bg-ambulance-card border-ambulance-border"
@@ -167,11 +168,12 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             />
           </div>
           <div className="col-span-2">
-            <Label>Complaint *</Label>
-            <Textarea
-              className="bg-ambulance-card border-ambulance-border"
+            <Label>Chief Complaint / Condition</Label>
+            <SymptomDropdown
               value={formData.complaint}
-              onChange={(e) => setFormData({ ...formData, complaint: e.target.value })}
+              onChange={(value, category) => 
+                setFormData({ ...formData, complaint: value, complaintCategory: category || '' })
+              }
             />
           </div>
         </div>

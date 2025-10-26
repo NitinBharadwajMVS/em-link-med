@@ -1,15 +1,26 @@
+import { useEffect, useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { AlertCard } from '@/components/hospital/AlertCard';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Building2, AlertTriangle, Activity, CheckCircle } from 'lucide-react';
+import { playAlertSound } from '@/utils/alertSounds';
 
 const HospitalDashboard = () => {
   const { alerts } = useApp();
+  const previousAlertCount = useRef(alerts.length);
 
   const criticalCount = alerts.filter(a => a.patient.triageLevel === 'critical' && a.status === 'pending').length;
   const urgentCount = alerts.filter(a => a.patient.triageLevel === 'urgent' && a.status === 'pending').length;
   const stableCount = alerts.filter(a => a.patient.triageLevel === 'stable' && a.status === 'pending').length;
+
+  useEffect(() => {
+    if (alerts.length > previousAlertCount.current) {
+      const newAlert = alerts[alerts.length - 1];
+      playAlertSound(newAlert.patient.triageLevel);
+    }
+    previousAlertCount.current = alerts.length;
+  }, [alerts]);
 
   return (
     <div className="min-h-screen bg-hospital-bg p-6">
