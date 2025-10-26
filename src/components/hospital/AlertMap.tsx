@@ -51,11 +51,13 @@ function getIconForTriage(triage: string): L.Icon {
   }
 }
 
-function MapUpdater({ center }: { center: L.LatLngTuple }) {
+function MapController({ center }: { center: L.LatLngTuple }) {
   const map = useMap();
   
   useEffect(() => {
-    map.setView(center, 12);
+    if (map && center) {
+      map.setView(center, 12);
+    }
   }, [map, center]);
 
   return null;
@@ -76,9 +78,8 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
         
-        <MapUpdater center={[hospitalLocation.lat, hospitalLocation.lng]} />
+        <MapController center={[hospitalLocation.lat, hospitalLocation.lng]} />
 
-        {/* Hospital Marker */}
         <Marker position={[hospitalLocation.lat, hospitalLocation.lng] as L.LatLngTuple} icon={hospitalIcon as any}>
           <Popup>
             <div className="text-center font-semibold">
@@ -87,7 +88,6 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
           </Popup>
         </Marker>
 
-        {/* Ambulance Alert Markers */}
         {alertsWithLocation.map((alert) => (
           <Marker
             key={alert.id}

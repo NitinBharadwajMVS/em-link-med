@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -33,11 +33,13 @@ const selectedHospitalIcon = L.icon({
   popupAnchor: [0, -40],
 });
 
-function MapUpdater({ bounds }: { bounds: L.LatLngBoundsExpression }) {
+function MapController({ bounds }: { bounds: L.LatLngBoundsExpression }) {
   const map = useMap();
   
   useEffect(() => {
-    map.fitBounds(bounds, { padding: [50, 50] });
+    if (map && bounds) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
   }, [map, bounds]);
 
   return null;
@@ -49,8 +51,6 @@ export const RouteMap = ({
   selectedHospital,
   routeCoordinates 
 }: RouteMapProps) => {
-  const mapRef = useRef(null);
-
   // Calculate bounds to fit all markers
   const allPoints: L.LatLngTuple[] = [
     [ambulanceLocation.lat, ambulanceLocation.lng],
@@ -62,7 +62,6 @@ export const RouteMap = ({
   return (
     <div className="w-full h-[500px] rounded-lg overflow-hidden border-2 border-ambulance-border shadow-xl">
       <MapContainer
-        ref={mapRef as any}
         center={[ambulanceLocation.lat, ambulanceLocation.lng] as L.LatLngTuple}
         zoom={13}
         className="w-full h-full"
@@ -73,9 +72,8 @@ export const RouteMap = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
         
-        <MapUpdater bounds={bounds} />
+        <MapController bounds={bounds} />
 
-        {/* Ambulance Marker */}
         <Marker position={[ambulanceLocation.lat, ambulanceLocation.lng] as L.LatLngTuple} icon={ambulanceIcon as any}>
           <Popup>
             <div className="text-center font-semibold">
@@ -84,7 +82,6 @@ export const RouteMap = ({
           </Popup>
         </Marker>
 
-        {/* Hospital Markers */}
         {hospitals.map((hospital) => (
           <Marker
             key={hospital.id}
@@ -106,7 +103,6 @@ export const RouteMap = ({
           </Marker>
         ))}
 
-        {/* Route Polyline */}
         {routeCoordinates && routeCoordinates.length > 0 && (
           <Polyline
             positions={routeCoordinates.map(coord => [coord[1], coord[0]] as L.LatLngTuple)}
