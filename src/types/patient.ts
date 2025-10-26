@@ -33,15 +33,6 @@ export interface Hospital {
   name: string;
   distance: number;
   address: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  phone: string;
-  capabilities: string[];
-  canAccept: boolean;
-  availableEquipment?: string[];
-  availableBeds?: number;
 }
 
 export interface Alert {
@@ -49,12 +40,7 @@ export interface Alert {
   patient: Patient;
   ambulanceId: string;
   eta: number;
-  status: 'pending' | 'acknowledged' | 'accepted' | 'rejected';
+  status: 'pending' | 'acknowledged' | 'accepted';
   hospitalId: string;
   timestamp: string;
-  ambulanceLocation?: {
-    lat: number;
-    lng: number;
-  };
-  requiredEquipment?: string[];
 }
