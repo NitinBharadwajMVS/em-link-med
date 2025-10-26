@@ -8,38 +8,39 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Medical Interface Colors */
-    --background: 220 20% 98%;
-    --foreground: 220 15% 15%;
+    /* Midnight Pulse Theme */
+    --background: 220 45% 6%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
+    --card: 220 40% 10%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+    --popover: 220 40% 10%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 210 80% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 100% 58%;
+    --primary-foreground: 220 45% 6%;
+    --primary-glow: 210 100% 70%;
 
-    --secondary: 210 20% 92%;
-    --secondary-foreground: 220 15% 15%;
+    --secondary: 220 30% 15%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 20% 95%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 210 80% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 100% 58%;
+    --accent-foreground: 220 45% 6%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
-    --ring: 210 80% 50%;
+    --border: 220 30% 20%;
+    --input: 220 30% 18%;
+    --ring: 210 100% 58%;
 
     --radius: 0.75rem;
 
-    /* Triage Colors */
+    /* Triage Colors (Coral, Amber, Mint) */
     --critical: 0 84% 60%;
     --critical-glow: 0 100% 50%;
     --urgent: 45 93% 47%;
@@ -48,45 +49,46 @@ All colors MUST be HSL.
     --stable-glow: 142 76% 50%;
 
     /* Ambulance Dark Theme */
-    --ambulance-bg: 220 40% 8%;
-    --ambulance-card: 220 30% 12%;
+    --ambulance-bg: 220 45% 6%;
+    --ambulance-card: 220 40% 10%;
     --ambulance-text: 210 40% 98%;
-    --ambulance-border: 220 25% 20%;
+    --ambulance-border: 220 30% 20%;
 
-    /* Hospital Light Theme */
-    --hospital-bg: 220 20% 98%;
-    --hospital-card: 0 0% 100%;
-    --hospital-glass: 0 0% 100% / 0.7;
+    /* Hospital Theme */
+    --hospital-bg: 220 45% 6%;
+    --hospital-card: 220 40% 10%;
+    --hospital-glass: 220 40% 10% / 0.7;
   }
 
   .dark {
-    --background: 220 40% 8%;
+    --background: 220 45% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 220 30% 12%;
+    --card: 220 40% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 220 30% 12%;
+    --popover: 220 40% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 80% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 100% 58%;
+    --primary-foreground: 220 45% 6%;
+    --primary-glow: 210 100% 70%;
 
-    --secondary: 220 25% 20%;
+    --secondary: 220 30% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 25% 20%;
+    --muted: 220 30% 18%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 210 80% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 100% 58%;
+    --accent-foreground: 220 45% 6%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 20%;
-    --input: 220 25% 20%;
-    --ring: 210 80% 50%;
+    --border: 220 30% 20%;
+    --input: 220 30% 18%;
+    --ring: 210 100% 58%;
   }
 }
 

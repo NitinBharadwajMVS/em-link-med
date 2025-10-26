@@ -9,12 +9,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-lg",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-accent",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-md",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-primary text-primary-foreground hover:shadow-[0_0_20px_hsl(var(--primary-glow)/0.4),inset_0_0_20px_hsl(var(--primary-glow)/0.1)]",
+        destructive: "bg-destructive text-destructive-foreground hover:shadow-[0_0_20px_hsl(var(--destructive)/0.4),inset_0_0_20px_hsl(var(--destructive)/0.1)]",
+        outline: "border border-border bg-card hover:border-primary hover:shadow-[0_0_15px_hsl(var(--primary)/0.3),inset_0_0_15px_hsl(var(--primary)/0.05)]",
+        secondary: "bg-secondary text-secondary-foreground hover:shadow-[0_0_15px_hsl(var(--primary)/0.2),inset_0_0_15px_hsl(var(--primary)/0.05)]",
+        ghost: "hover:bg-muted hover:shadow-[inset_0_0_15px_hsl(var(--primary)/0.05)]",
+        link: "text-primary underline-offset-4 hover:underline hover:text-primary-glow",
       },
       size: {
         default: "h-10 px-4 py-2",
