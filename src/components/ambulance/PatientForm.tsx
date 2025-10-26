@@ -16,7 +16,7 @@ interface PatientFormProps {
 }
 
 export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
-  const { patients, addPatient, sendAlert } = useApp();
+  const { patients, addPatient, sendAlert, currentUser } = useApp();
   const [isNewPatient, setIsNewPatient] = useState(true);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [formData, setFormData] = useState({
@@ -67,7 +67,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
       patientData = { ...selectedPatient, vitals, triageLevel };
     }
 
-    const hospital = sendAlert(patientData, `AMB${Math.floor(Math.random() * 900) + 100}`);
+    const hospital = sendAlert(patientData, currentUser || 'AMB-001');
     
     toast.success(
       `Pre-alert sent to ${hospital.name} – ${hospital.distance} km away`,
