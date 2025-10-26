@@ -271,6 +271,8 @@ const AmbulanceDashboard = () => {
                 onSelect={(hospital) => handleChangeHospital(editingAlertId, hospital.id)}
                 requiredEquipment={alerts.find(a => a.id === editingAlertId)?.requiredEquipment}
                 alertId={editingAlertId}
+                onAddHospital={addHospital}
+                onImportHospitals={importHospitals}
               />
             )}
           </DialogContent>
