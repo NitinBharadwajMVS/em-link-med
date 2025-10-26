@@ -31,16 +31,30 @@ export interface Patient {
 export interface Hospital {
   id: string;
   name: string;
-  distance: number;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
   address: string;
+  contact: string;
+  equipment: string[];
+  status: 'available' | 'unavailable';
 }
 
 export interface Alert {
   id: string;
   patient: Patient;
   ambulanceId: string;
+  ambulanceContact: string;
+  ambulanceEquipment: string[];
+  ambulancePosition?: {
+    lat: number;
+    lng: number;
+  };
   eta: number;
-  status: 'pending' | 'acknowledged' | 'accepted';
+  distance: number;
+  status: 'pending' | 'acknowledged' | 'accepted' | 'declined';
   hospitalId: string;
+  route?: [number, number][]; // [lng, lat] pairs
   timestamp: string;
 }
