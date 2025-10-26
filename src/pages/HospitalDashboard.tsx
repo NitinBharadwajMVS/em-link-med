@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { AlertCard } from '@/components/hospital/AlertCard';
-import { AlertMap } from '@/components/hospital/AlertMap';
+import { SimpleAlertMap } from '@/components/hospital/SimpleAlertMap';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Building2, AlertTriangle, Activity, CheckCircle, MapIcon } from 'lucide-react';
@@ -76,7 +76,18 @@ const HospitalDashboard = () => {
             <MapIcon className="w-5 h-5 text-primary" />
             <h3 className="text-xl font-bold">Live Ambulance Tracking</h3>
           </div>
-          <AlertMap alerts={alerts} hospitalLocation={hospitalLocation} />
+          <SimpleAlertMap
+            hospitalPosition={[hospitalLocation.lat, hospitalLocation.lng]}
+            ambulances={alerts
+              .filter(alert => alert.ambulanceLocation)
+              .map(alert => ({
+                id: alert.ambulanceId,
+                position: [alert.ambulanceLocation!.lat, alert.ambulanceLocation!.lng] as [number, number],
+                patientName: alert.patient.name,
+                triageLevel: alert.patient.triageLevel,
+                eta: alert.eta,
+              }))}
+          />
         </Card>
 
         <div className="mb-4 flex items-center justify-between">

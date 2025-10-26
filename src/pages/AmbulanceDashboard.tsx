@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TriageButton } from '@/components/ambulance/TriageButton';
 import { PatientForm } from '@/components/ambulance/PatientForm';
 import { HospitalSelector } from '@/components/ambulance/HospitalSelector';
-import { RouteMap } from '@/components/ambulance/RouteMap';
+import { SimpleMap } from '@/components/ambulance/SimpleMap';
 import { TriageLevel, Hospital } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { calculateRoute } from '@/utils/routeService';
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
-  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  const [routeCoordinates, setRouteCoordinates] = useState<Array<[number, number]>>([]);
   const { logout, hospitals } = useApp();
   const navigate = useNavigate();
   
@@ -28,8 +28,14 @@ const AmbulanceDashboard = () => {
 
   const handleSelectHospital = async (hospital: Hospital) => {
     setSelectedHospital(hospital);
-    const route = await calculateRoute(ambulanceLocation, hospital.coordinates);
-    setRouteCoordinates(route.coordinates);
+    try {
+      const route = await calculateRoute(ambulanceLocation, hospital.coordinates);
+      const positions: Array<[number, number]> = route.coordinates.map(coord => [coord[1], coord[0]]);
+      setRouteCoordinates(positions);
+    } catch (error) {
+      console.error('Route calculation failed:', error);
+      setRouteCoordinates([]);
+    }
   };
 
   return (
@@ -106,11 +112,16 @@ const AmbulanceDashboard = () => {
               <MapPin className="w-5 h-5 text-primary" />
               <h3 className="text-xl font-bold text-ambulance-text">Route Navigation</h3>
             </div>
-            <RouteMap
-              ambulanceLocation={ambulanceLocation}
-              hospitals={hospitals}
-              selectedHospital={selectedHospital || undefined}
-              routeCoordinates={routeCoordinates}
+            <SimpleMap
+              ambulancePosition={[ambulanceLocation.lat, ambulanceLocation.lng]}
+              hospitals={hospitals.map(h => ({
+                id: h.id,
+                name: h.name,
+                position: [h.coordinates.lat, h.coordinates.lng] as [number, number],
+                canAccept: h.canAccept,
+              }))}
+              selectedHospitalId={selectedHospital?.id}
+              route={routeCoordinates}
             />
           </Card>
 
