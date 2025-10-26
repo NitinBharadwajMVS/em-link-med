@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Patient, Alert, Hospital } from '@/types/patient';
+import { Patient, Alert, Hospital, AuditLog } from '@/types/patient';
+import hospitalsData from '@/data/hospitals_bangalore.json';
 
 interface AppContextType {
   patients: Patient[];
@@ -7,20 +8,18 @@ interface AppContextType {
   hospitals: Hospital[];
   currentUser: string | null;
   addPatient: (patient: Patient) => void;
-  sendAlert: (patient: Patient, ambulanceId: string) => Hospital;
-  updateAlertStatus: (alertId: string, status: 'acknowledged' | 'accepted') => void;
+  sendAlert: (patient: Patient, ambulanceId: string, hospitalId: string, requiredEquipment?: string[]) => Hospital;
+  updateAlertStatus: (alertId: string, status: 'acknowledged' | 'accepted' | 'declined', declineReason?: string) => void;
   completeCase: (alertId: string) => void;
+  changeHospital: (alertId: string, newHospitalId: string, reason: string) => void;
+  markHospitalUnavailable: (alertId: string, hospitalId: string, reason: string) => void;
   login: (userId: string) => void;
   logout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const mockHospitals: Hospital[] = [
-  { id: '1', name: 'CityCare Hospital', distance: 1.4, address: '123 Main St' },
-  { id: '2', name: 'General Medical Center', distance: 1.8, address: '456 Oak Ave' },
-  { id: '3', name: 'Emergency Care Unit', distance: 2.1, address: '789 Pine Rd' },
-];
+const mockHospitals: Hospital[] = hospitalsData as Hospital[];
 
 const mockPatients: Patient[] = [
   {
@@ -61,35 +60,140 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setPatients((prev) => [...prev, patient]);
   };
 
-  const sendAlert = (patient: Patient, ambulanceId: string): Hospital => {
-    const nearestHospital = hospitals[Math.floor(Math.random() * hospitals.length)];
+  const sendAlert = (
+    patient: Patient,
+    ambulanceId: string,
+    hospitalId: string,
+    requiredEquipment?: string[]
+  ): Hospital => {
+    const selectedHospital = hospitals.find((h) => h.id === hospitalId);
+    if (!selectedHospital) {
+      throw new Error('Hospital not found');
+    }
+
     const newAlert: Alert = {
       id: `A${Date.now()}`,
       patient,
       ambulanceId,
       eta: Math.floor(Math.random() * 15) + 5,
       status: 'pending',
-      hospitalId: nearestHospital.id,
+      hospitalId: selectedHospital.id,
       timestamp: new Date().toISOString(),
+      requiredEquipment,
+      auditLog: [
+        {
+          timestamp: new Date().toISOString(),
+          action: 'Pre-alert sent',
+          actor: ambulanceId,
+          details: `Sent to ${selectedHospital.name}`,
+        },
+      ],
     };
     setAlerts((prev) => [...prev, newAlert]);
-    return nearestHospital;
+    return selectedHospital;
   };
 
-  const updateAlertStatus = (alertId: string, status: 'acknowledged' | 'accepted') => {
+  const updateAlertStatus = (
+    alertId: string,
+    status: 'acknowledged' | 'accepted' | 'declined',
+    declineReason?: string
+  ) => {
     setAlerts((prev) =>
-      prev.map((alert) => (alert.id === alertId ? { ...alert, status } : alert))
+      prev.map((alert) => {
+        if (alert.id !== alertId) return alert;
+
+        const hospital = hospitals.find((h) => h.id === alert.hospitalId);
+        const newLog: AuditLog = {
+          timestamp: new Date().toISOString(),
+          action: status === 'declined' ? 'Alert declined' : `Alert ${status}`,
+          actor: hospital?.name || alert.hospitalId,
+          details: declineReason || `Status updated to ${status}`,
+        };
+
+        return {
+          ...alert,
+          status,
+          declineReason: status === 'declined' ? declineReason : alert.declineReason,
+          auditLog: [...alert.auditLog, newLog],
+        };
+      })
     );
   };
 
   const completeCase = (alertId: string) => {
     setAlerts((prev) =>
-      prev.map((alert) => 
-        alert.id === alertId 
-          ? { ...alert, status: 'completed' as const, completedAt: new Date().toISOString() } 
-          : alert
-      )
+      prev.map((alert) => {
+        if (alert.id !== alertId) return alert;
+
+        const newLog: AuditLog = {
+          timestamp: new Date().toISOString(),
+          action: 'Patient dropped',
+          actor: alert.ambulanceId,
+          details: 'Patient successfully dropped at hospital',
+        };
+
+        return {
+          ...alert,
+          status: 'completed' as const,
+          completedAt: new Date().toISOString(),
+          auditLog: [...alert.auditLog, newLog],
+        };
+      })
     );
+  };
+
+  const changeHospital = (alertId: string, newHospitalId: string, reason: string) => {
+    setAlerts((prev) =>
+      prev.map((alert) => {
+        if (alert.id !== alertId) return alert;
+
+        const oldHospital = hospitals.find((h) => h.id === alert.hospitalId);
+        const newHospital = hospitals.find((h) => h.id === newHospitalId);
+
+        const newLog: AuditLog = {
+          timestamp: new Date().toISOString(),
+          action: 'Hospital changed',
+          actor: alert.ambulanceId,
+          details: `Changed from ${oldHospital?.name} to ${newHospital?.name}. Reason: ${reason}`,
+        };
+
+        return {
+          ...alert,
+          hospitalId: newHospitalId,
+          previousHospitalIds: [...(alert.previousHospitalIds || []), alert.hospitalId],
+          status: 'pending' as const, // Reset to pending for new hospital
+          auditLog: [...alert.auditLog, newLog],
+        };
+      })
+    );
+  };
+
+  const markHospitalUnavailable = (alertId: string, hospitalId: string, reason: string) => {
+    const alert = alerts.find((a) => a.id === alertId);
+    if (!alert) return;
+
+    // Mark hospital as unavailable for this alert
+    setAlerts((prev) =>
+      prev.map((a) => {
+        if (a.id !== alertId) return a;
+
+        const hospital = hospitals.find((h) => h.id === hospitalId);
+        const newLog: AuditLog = {
+          timestamp: new Date().toISOString(),
+          action: 'Hospital marked unavailable',
+          actor: hospital?.name || hospitalId,
+          details: reason,
+        };
+
+        return {
+          ...a,
+          auditLog: [...a.auditLog, newLog],
+        };
+      })
+    );
+
+    // Update hospital unavailability (this would need a more sophisticated state management)
+    // For now, we're just logging it in the audit
   };
 
   const login = (userId: string) => {
@@ -111,6 +215,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         sendAlert,
         updateAlertStatus,
         completeCase,
+        changeHospital,
+        markHospitalUnavailable,
         login,
         logout,
       }}

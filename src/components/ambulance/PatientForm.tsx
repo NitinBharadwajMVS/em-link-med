@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LiveVitalsDisplay } from './LiveVitalsDisplay';
 import { MultipleSymptomDropdown } from './MultipleSymptomDropdown';
+import { HospitalSelector } from './HospitalSelector';
 import { useApp } from '@/contexts/AppContext';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { calculateETA } from '@/utils/distanceCalculator';
 
 interface PatientFormProps {
   triageLevel: TriageLevel;
@@ -16,9 +18,11 @@ interface PatientFormProps {
 }
 
 export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
-  const { patients, addPatient, sendAlert, currentUser } = useApp();
+  const { patients, addPatient, sendAlert, currentUser, hospitals } = useApp();
   const [isNewPatient, setIsNewPatient] = useState(true);
   const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string>('');
+  const [requiredEquipment, setRequiredEquipment] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -66,12 +70,24 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
       patientData = { ...selectedPatient, vitals, triageLevel };
     }
 
-    const hospital = sendAlert(patientData, currentUser || 'AMB-001');
+    if (!selectedHospitalId) {
+      toast.error('Please select a hospital');
+      return;
+    }
+
+    const hospital = sendAlert(
+      patientData,
+      currentUser || 'AMB-001',
+      selectedHospitalId,
+      requiredEquipment.length > 0 ? requiredEquipment : undefined
+    );
     
+    const eta = calculateETA(hospital.distance);
+
     toast.success(
-      `Pre-alert sent to ${hospital.name} – ${hospital.distance} km away`,
+      `Pre-alert sent to ${hospital.name}`,
       {
-        description: `ETA: ${Math.floor(Math.random() * 10) + 5} minutes`,
+        description: `Distance: ${hospital.distance} km | ETA: ${eta} minutes`,
         duration: 5000,
       }
     );
@@ -177,6 +193,23 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
           </div>
         </div>
       )}
+
+      <div>
+        <Label>Required Equipment (Optional)</Label>
+        <MultipleSymptomDropdown
+          values={requiredEquipment}
+          onChange={setRequiredEquipment}
+          options={['Ventilator', 'ICU', 'CT Scan', 'MRI', 'Oxygen', 'Defibrillator', 'Cardiac Monitor', 'Dialysis', 'Cath Lab']}
+          placeholder="Select required equipment..."
+        />
+      </div>
+
+      <HospitalSelector
+        hospitals={hospitals}
+        selectedHospitalId={selectedHospitalId}
+        onSelect={(hospital) => setSelectedHospitalId(hospital.id)}
+        requiredEquipment={requiredEquipment}
+      />
 
       <LiveVitalsDisplay
         onVitalsUpdate={(spo2, heartRate) => {

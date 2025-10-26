@@ -33,6 +33,17 @@ export interface Hospital {
   name: string;
   distance: number;
   address: string;
+  contact?: string;
+  equipment?: string[];
+  specialties?: string[];
+  unavailableForAlert?: string; // alertId if hospital is unavailable for this specific alert
+}
+
+export interface AuditLog {
+  timestamp: string;
+  action: string;
+  actor: string;
+  details: string;
 }
 
 export interface Alert {
@@ -40,8 +51,12 @@ export interface Alert {
   patient: Patient;
   ambulanceId: string;
   eta: number;
-  status: 'pending' | 'acknowledged' | 'accepted' | 'completed';
+  status: 'pending' | 'acknowledged' | 'accepted' | 'completed' | 'declined' | 'cancelled';
   hospitalId: string;
   timestamp: string;
   completedAt?: string;
+  declineReason?: string;
+  requiredEquipment?: string[];
+  auditLog: AuditLog[];
+  previousHospitalIds?: string[]; // Track hospital changes
 }

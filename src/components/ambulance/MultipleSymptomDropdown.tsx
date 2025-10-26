@@ -22,23 +22,50 @@ import { medicalConditions } from '@/data/medicalConditions';
 interface MultipleSymptomDropdownProps {
   values: string[];
   onChange: (values: string[]) => void;
+  options?: any[];
+  placeholder?: string;
 }
 
-export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDropdownProps) => {
+export const MultipleSymptomDropdown = ({ 
+  values, 
+  onChange, 
+  options = medicalConditions,
+  placeholder = "Search or add symptoms..."
+}: MultipleSymptomDropdownProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const selectedConditions = useMemo(() => {
     return values.map(value => {
+      // If using custom options array (strings), return them directly
+      if (Array.isArray(options[0]) === false && typeof options[0] === 'string') {
+        return { value, label: value, category: 'Equipment' };
+      }
+      
+      // Otherwise, search through medicalConditions
       for (const cat of medicalConditions) {
         const found = cat.conditions.find(c => c.value === value);
         if (found) return { value, label: found.label, category: cat.category };
       }
       return { value, label: value, category: 'Other' };
     });
-  }, [values]);
+  }, [values, options]);
 
   const filteredCategories = useMemo(() => {
+    // If using simple string array for options (like equipment)
+    if (options && Array.isArray(options) && typeof options[0] === 'string') {
+      const searchLower = search.toLowerCase();
+      const filtered = search 
+        ? options.filter((opt: string) => opt.toLowerCase().includes(searchLower))
+        : options;
+      
+      return [{
+        category: 'Available Options',
+        conditions: filtered.map((opt: string) => ({ value: opt, label: opt, common: false }))
+      }];
+    }
+    
+    // Otherwise use medicalConditions structure
     if (!search) return medicalConditions;
     
     const searchLower = search.toLowerCase();
@@ -51,7 +78,7 @@ export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDro
         ),
       }))
       .filter(cat => cat.conditions.length > 0);
-  }, [search]);
+  }, [search, options]);
 
   const handleSelect = (conditionValue: string) => {
     const newValues = values.includes(conditionValue)
@@ -82,10 +109,17 @@ export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDro
   const hasExactMatch = useMemo(() => {
     if (!search) return true;
     const searchLower = search.toLowerCase().trim();
+    
+    // Check simple string options
+    if (options && Array.isArray(options) && typeof options[0] === 'string') {
+      return options.some((opt: string) => opt.toLowerCase() === searchLower);
+    }
+    
+    // Check medicalConditions
     return medicalConditions.some(cat =>
       cat.conditions.some(c => c.label.toLowerCase() === searchLower)
     );
-  }, [search]);
+  }, [search, options]);
 
   return (
     <div className="space-y-2">
@@ -125,7 +159,7 @@ export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDro
             <div className="flex items-center border-b border-ambulance-border px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-white" />
               <input
-                placeholder="Search or type custom symptom (Press Enter to add)..."
+                placeholder={placeholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleKeyDown}

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "1",
+    "name": "CityCare Hospital",
+    "distance": 1.4,
+    "address": "123 Main St, Indiranagar, Bangalore",
+    "contact": "+91-80-2555-1234",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "Defibrillator", "Oxygen", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology"]
+  },
+  {
+    "id": "2",
+    "name": "General Medical Center",
+    "distance": 1.8,
+    "address": "456 Oak Ave, Koramangala, Bangalore",
+    "contact": "+91-80-2555-5678",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "3",
+    "name": "Emergency Care Unit",
+    "distance": 2.1,
+    "address": "789 Pine Rd, Whitefield, Bangalore",
+    "contact": "+91-80-2555-9012",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis"],
+    "specialties": ["Emergency", "Trauma", "Neurology", "Cardiology"]
+  },
+  {
+    "id": "4",
+    "name": "Apollo Specialty Hospital",
+    "distance": 3.2,
+    "address": "15 MG Road, Bangalore",
+    "contact": "+91-80-2555-3456",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
+  },
+  {
+    "id": "5",
+    "name": "Fortis Healthcare",
+    "distance": 4.5,
+    "address": "45 Bannerghatta Road, Bangalore",
+    "contact": "+91-80-2555-7890",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics", "Gastroenterology"]
+  }
+]

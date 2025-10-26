@@ -3,10 +3,23 @@ import { Alert } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Activity, Clock, User, Phone, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Activity, Clock, User, Phone, ChevronDown, ChevronUp, Check, XCircle, AlertTriangle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import { hasRequiredEquipment } from '@/utils/distanceCalculator';
 
 interface AlertCardProps {
   alert: Alert;
@@ -14,8 +27,15 @@ interface AlertCardProps {
 
 export const AlertCard = ({ alert }: AlertCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { updateAlertStatus } = useApp();
+  const [declineReason, setDeclineReason] = useState('');
+  const [isDeclineDialogOpen, setIsDeclineDialogOpen] = useState(false);
+  const { updateAlertStatus, hospitals } = useApp();
   const { patient } = alert;
+
+  const hospital = hospitals.find(h => h.id === alert.hospitalId);
+  const equipmentCheck = alert.requiredEquipment 
+    ? hasRequiredEquipment(hospital || { id: '', name: '', distance: 0, address: '' }, alert.requiredEquipment)
+    : { hasAll: true, missing: [] };
 
   const triageColors = {
     critical: 'bg-critical/20 border-critical text-critical',
@@ -31,6 +51,17 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
   const handleAccept = () => {
     updateAlertStatus(alert.id, 'accepted');
     toast.success('Patient case accepted');
+  };
+
+  const handleDecline = () => {
+    if (!declineReason.trim()) {
+      toast.error('Please provide a reason for declining');
+      return;
+    }
+    updateAlertStatus(alert.id, 'declined', declineReason);
+    toast.success('Alert declined - ambulance will be notified');
+    setIsDeclineDialogOpen(false);
+    setDeclineReason('');
   };
 
   return (
@@ -77,6 +108,30 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
         <div className="text-sm font-semibold text-muted-foreground mb-1">Chief Complaint</div>
         <div className="font-medium">{patient.complaint}</div>
       </div>
+
+      {alert.requiredEquipment && alert.requiredEquipment.length > 0 && (
+        <div className="mb-4 p-3 bg-card rounded-lg">
+          <div className="text-sm font-semibold text-muted-foreground mb-2">Required Equipment:</div>
+          <div className="flex flex-wrap gap-2">
+            {alert.requiredEquipment.map((eq) => (
+              <Badge
+                key={eq}
+                variant={equipmentCheck.missing.includes(eq) ? 'destructive' : 'secondary'}
+                className="text-xs"
+              >
+                {eq}
+                {equipmentCheck.missing.includes(eq) && ' ⚠️'}
+              </Badge>
+            ))}
+          </div>
+          {!equipmentCheck.hasAll && (
+            <div className="mt-2 text-sm text-critical font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Missing equipment: {equipmentCheck.missing.join(', ')}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-3 mb-4 text-center">
         <div className="p-2 bg-card rounded-lg">
@@ -143,6 +198,38 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
               <Activity className="w-4 h-4 mr-2" />
               Acknowledge
             </Button>
+            
+            <AlertDialog open={isDeclineDialogOpen} onOpenChange={setIsDeclineDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="flex-1">
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Decline
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Decline Pre-Alert</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Please provide a reason for declining this alert. The ambulance will be notified immediately.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="my-4">
+                  <Textarea
+                    placeholder="E.g., No available ICU beds, Missing required equipment (Ventilator), Emergency department at capacity..."
+                    value={declineReason}
+                    onChange={(e) => setDeclineReason(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDecline} className="bg-critical hover:bg-critical/90">
+                    Decline Alert
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             <Button onClick={handleAccept} className="flex-1 bg-stable hover:bg-stable/90">
               <Check className="w-4 h-4 mr-2" />
               Accept
