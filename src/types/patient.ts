@@ -37,6 +37,8 @@ export interface Hospital {
   equipment?: string[];
   specialties?: string[];
   unavailableForAlert?: string; // alertId if hospital is unavailable for this specific alert
+  latitude: number;
+  longitude: number;
 }
 
 export interface AuditLog {

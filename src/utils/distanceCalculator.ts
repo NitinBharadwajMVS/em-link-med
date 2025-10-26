@@ -39,24 +39,38 @@ export const sortHospitalsByPreference = (
     .sort((a, b) => a.distance - b.distance);
 };
 
-// Deterministic fallback recommendation logic
+// Deterministic fallback recommendation logic with ambulance location
 export const getFallbackRecommendation = (
   hospitals: Hospital[],
-  requiredEquipment?: string[]
+  ambulanceLocation: { latitude: number; longitude: number },
+  requiredEquipment?: string[],
+  maxRadius: number = 5
 ): Hospital[] => {
   return [...hospitals]
     .map(hospital => {
+      // Recalculate distance from ambulance location
+      const actualDistance = calculateDistance(
+        ambulanceLocation.latitude,
+        ambulanceLocation.longitude,
+        hospital.latitude,
+        hospital.longitude
+      );
+      
       const equipmentMatch = hasRequiredEquipment(hospital, requiredEquipment);
       const equipmentScore = equipmentMatch.hasAll ? 100 : 
         Math.max(0, 100 - (equipmentMatch.missing.length * 20));
       
       // Distance score (closer is better, max 50 points)
-      const distanceScore = Math.max(0, 50 - hospital.distance * 2);
+      const distanceScore = Math.max(0, 50 - actualDistance * 2);
       
-      const totalScore = equipmentScore * 0.7 + distanceScore * 0.3;
+      // Penalize hospitals beyond maxRadius unless they're the only equipment match
+      const radiusPenalty = actualDistance > maxRadius && !equipmentMatch.hasAll ? 0.5 : 1;
+      
+      const totalScore = (equipmentScore * 0.7 + distanceScore * 0.3) * radiusPenalty;
       
       return {
         ...hospital,
+        distance: actualDistance,
         score: Math.round(totalScore),
       };
     })

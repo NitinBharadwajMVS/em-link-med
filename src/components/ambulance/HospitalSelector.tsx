@@ -14,12 +14,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Building2, Phone, Navigation, CheckCircle, AlertCircle, Clock, Search, Plus, Upload, MapPin, Loader2, Sparkles } from 'lucide-react';
-import { calculateETA, hasRequiredEquipment, sortHospitalsByPreference, getFallbackRecommendation } from '@/utils/distanceCalculator';
+import { Building2, Phone, Navigation, CheckCircle, AlertCircle, Clock, Search, Plus, Upload, MapPin, Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { calculateDistance, calculateETA, hasRequiredEquipment, sortHospitalsByPreference, getFallbackRecommendation } from '@/utils/distanceCalculator';
 import { AddHospitalDialog } from './AddHospitalDialog';
 import { ImportHospitalsDialog } from './ImportHospitalsDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface HospitalSelectorProps {
   hospitals: Hospital[];
@@ -31,6 +32,14 @@ interface HospitalSelectorProps {
   onAddHospital?: (hospital: Hospital) => void;
   onImportHospitals?: (hospitals: Hospital[]) => void;
 }
+
+type GeolocationStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
+
+const FALLBACK_LOCATION = {
+  latitude: 12.9279,
+  longitude: 77.6271,
+  name: 'Bannerghatta Road, Bangalore (Fallback)'
+};
 
 export const HospitalSelector = ({
   hospitals,
@@ -50,8 +59,26 @@ export const HospitalSelector = ({
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
   const [isAiMode, setIsAiMode] = useState(false);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
+  const [ambulanceLocation, setAmbulanceLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
 
-  const sortedHospitals = sortHospitalsByPreference(hospitals, alertId);
+  // Recalculate hospital distances based on ambulance location
+  const hospitalsWithDistances = useMemo(() => {
+    if (!ambulanceLocation) return hospitals;
+    
+    return hospitals.map(hospital => ({
+      ...hospital,
+      distance: calculateDistance(
+        ambulanceLocation.latitude,
+        ambulanceLocation.longitude,
+        hospital.latitude,
+        hospital.longitude
+      )
+    }));
+  }, [hospitals, ambulanceLocation]);
+
+  const sortedHospitals = sortHospitalsByPreference(hospitalsWithDistances, alertId);
   const selectedHospital = hospitals.find((h) => h.id === selectedHospitalId);
 
   // Filter hospitals based on search query
@@ -69,6 +96,43 @@ export const HospitalSelector = ({
     });
   }, [sortedHospitals, searchQuery]);
 
+  const requestGeolocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation not supported by browser');
+      setGeolocationStatus('error');
+      setAmbulanceLocation(FALLBACK_LOCATION);
+      setUsingFallback(true);
+      return;
+    }
+
+    setGeolocationStatus('requesting');
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        setAmbulanceLocation(location);
+        setGeolocationStatus('granted');
+        setUsingFallback(false);
+        toast.success(`Location obtained: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setGeolocationStatus('denied');
+        setAmbulanceLocation(FALLBACK_LOCATION);
+        setUsingFallback(true);
+        toast.warning(`Location permission denied. Using fallback: ${FALLBACK_LOCATION.name}`);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const handleSelect = (hospital: Hospital) => {
     setSelectedForConfirm(hospital);
   };
@@ -84,6 +148,11 @@ export const HospitalSelector = ({
   };
 
   const handleAiRecommend = async () => {
+    if (!ambulanceLocation) {
+      requestGeolocation();
+      return;
+    }
+
     setIsLoadingAi(true);
     try {
       const { data, error } = await supabase.functions.invoke('recommend-hospital', {
@@ -102,6 +171,7 @@ export const HospitalSelector = ({
             requiredEquipment,
           },
           hospitalList: sortedHospitals,
+          ambulanceLocation,
         },
       });
 
@@ -109,12 +179,12 @@ export const HospitalSelector = ({
 
       if (data?.useFallback) {
         // Use fallback logic
-        const fallbackHospitals = getFallbackRecommendation(sortedHospitals, requiredEquipment);
+        const fallbackHospitals = getFallbackRecommendation(sortedHospitals, ambulanceLocation, requiredEquipment);
         setAiRecommendations(
           fallbackHospitals.map(h => ({
             hospitalName: h.name,
             confidence: (h as any).score,
-            reasoning: `Equipment match score and proximity-based recommendation. Distance: ${h.distance}km`,
+            reasoning: `Equipment match score and proximity-based recommendation. Distance: ${h.distance.toFixed(1)}km`,
           }))
         );
         setIsAiMode(false);
@@ -125,12 +195,12 @@ export const HospitalSelector = ({
     } catch (error) {
       console.error('AI recommendation error:', error);
       // Fallback to deterministic method
-      const fallbackHospitals = getFallbackRecommendation(sortedHospitals, requiredEquipment);
+      const fallbackHospitals = getFallbackRecommendation(sortedHospitals, ambulanceLocation, requiredEquipment);
       setAiRecommendations(
         fallbackHospitals.map(h => ({
           hospitalName: h.name,
           confidence: (h as any).score,
-          reasoning: `Equipment match score and proximity-based recommendation. Distance: ${h.distance}km`,
+          reasoning: `Equipment match score and proximity-based recommendation. Distance: ${h.distance.toFixed(1)}km`,
         }))
       );
       setIsAiMode(false);
@@ -179,7 +249,7 @@ export const HospitalSelector = ({
         <div className="flex gap-2 mb-3 flex-wrap">
           <Badge variant="outline" className="flex items-center gap-1">
             <Navigation className="w-3 h-3" />
-            {hospital.distance} km
+            {hospital.distance.toFixed(1)} km
           </Badge>
           <Badge variant="outline" className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
@@ -254,263 +324,265 @@ export const HospitalSelector = ({
   };
 
   return (
-    <div className="space-y-3">
-      {selectedHospital && (
-        <div>
-          <Label>Selected Hospital</Label>
-          <Card className="p-4 bg-ambulance-card border-ambulance-border">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Building2 className="w-5 h-5 text-primary" />
-                  <h3 className="font-bold text-lg">{selectedHospital.name}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">{selectedHospital.address}</p>
-                {selectedHospital.contact && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <Phone className="w-4 h-4" />
-                    <a
-                      href={`tel:${selectedHospital.contact}`}
-                      className="text-sm text-primary hover:underline"
-                    >
-                      {selectedHospital.contact}
-                    </a>
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Badge variant="outline">
-                    <Navigation className="w-3 h-3 mr-1" />
-                    {selectedHospital.distance} km
-                  </Badge>
-                  <Badge variant="outline">
-                    <Clock className="w-3 h-3 mr-1" />
-                    ETA: {calculateETA(selectedHospital.distance)} min
-                  </Badge>
-                </div>
-                {selectedHospital.equipment && selectedHospital.equipment.length > 0 && (
-                  <div className="mt-3">
-                    <div className="text-xs font-semibold text-muted-foreground mb-1">Equipment:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedHospital.equipment.map((eq) => (
-                        <Badge key={eq} variant="secondary" className="text-xs">
-                          {eq}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {!readOnly && (
-        <>
-          <Dialog open={isOpen} onOpenChange={(open) => {
-            setIsOpen(open);
-            if (!open) {
-              setSearchQuery('');
-              setSelectedForConfirm(null);
-              setAiRecommendations([]);
-              setIsAiMode(false);
-            }
-          }}>
+    <>
+      <AddHospitalDialog 
+        open={showAddDialog} 
+        onOpenChange={setShowAddDialog}
+        onAdd={(hospital) => {
+          onAddHospital?.(hospital);
+          setShowAddDialog(false);
+        }}
+      />
+      
+      <ImportHospitalsDialog 
+        open={showImportDialog} 
+        onOpenChange={setShowImportDialog}
+        onImport={(importedHospitals) => {
+          onImportHospitals?.(importedHospitals);
+          setShowImportDialog(false);
+        }}
+      />
+      
+      <div className="space-y-2">
+        <Label className="text-base font-semibold">Hospital Selection</Label>
+        <div className="flex gap-2">
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full border-ambulance-border">
-                {selectedHospital ? 'Change Hospital' : 'Select Hospital'}
+              <Button 
+                variant="outline" 
+                className="w-full justify-start h-auto py-3"
+                disabled={readOnly}
+              >
+                <div className="flex items-center w-full">
+                  <Building2 className="w-5 h-5 mr-2 flex-shrink-0" />
+                  <div className="flex-1 text-left">
+                    {selectedHospital ? (
+                      <div>
+                        <div className="font-semibold">{selectedHospital.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {selectedHospital.distance.toFixed(1)} km • ETA: {calculateETA(selectedHospital.distance)} min
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Select a hospital</span>
+                    )}
+                  </div>
+                </div>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-hospital-dark border-hospital-border">
-              <DialogHeader>
-                <DialogTitle className="text-2xl text-hospital-text flex items-center gap-3">
-                  Select Hospital
-                  {aiRecommendations.length > 0 && (
-                    <span className="text-sm font-normal px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/30">
-                      {isAiMode ? '🤖 AI Recommendation Active' : '⚡ Offline Recommendation Mode'}
-                    </span>
-                  )}
+            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+              <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-b from-background to-muted/20">
+                <DialogTitle className="text-2xl">
+                  Select Hospital {selectedHospital && `(Current: ${selectedHospital.name})`}
                 </DialogTitle>
                 <DialogDescription>
-                  Choose the best hospital based on distance, equipment, and availability.
                   {requiredEquipment && requiredEquipment.length > 0 && (
-                    <div className="mt-2 p-2 bg-primary/5 rounded-lg text-sm">
-                      <span className="font-semibold">Required Equipment: </span>
-                      {requiredEquipment.join(', ')}
+                    <div className="mt-3 p-3 bg-stable/10 rounded-lg border border-stable/20">
+                      <div className="text-sm font-semibold text-stable flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-4 h-4" />
+                        Required Equipment:
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {requiredEquipment.map((eq) => (
+                          <Badge key={eq} variant="outline" className="border-stable/30 text-stable">
+                            {eq}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Search hospitals by name, address, equipment..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-hospital-card border-hospital-border text-hospital-text"
-                  />
+              <div className="px-6 py-4 space-y-4 border-b">
+                {/* Geolocation status */}
+                {ambulanceLocation && (
+                  <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <div className="flex-1 text-sm">
+                      <span className="font-semibold">Ambulance Location: </span>
+                      <span className="text-muted-foreground">
+                        {ambulanceLocation.latitude.toFixed(4)}, {ambulanceLocation.longitude.toFixed(4)}
+                        {usingFallback && <span className="ml-2 text-amber-500">(Fallback - {FALLBACK_LOCATION.name})</span>}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={requestGeolocation}
+                      disabled={geolocationStatus === 'requesting'}
+                    >
+                      <RefreshCw className={cn("w-4 h-4", geolocationStatus === 'requesting' && "animate-spin")} />
+                      Retry
+                    </Button>
+                  </div>
+                )}
+
+                {/* Geolocation permission flow */}
+                {!ambulanceLocation && geolocationStatus !== 'idle' && (
+                  <div className="flex items-center gap-2 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                    {geolocationStatus === 'requesting' && (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                        <span className="text-sm">Requesting location permission...</span>
+                      </>
+                    )}
+                    {geolocationStatus === 'denied' && (
+                      <>
+                        <AlertCircle className="w-4 h-4 text-amber-500" />
+                        <span className="text-sm">Location permission denied. Using fallback coordinates.</span>
+                      </>
+                    )}
+                    {geolocationStatus === 'error' && (
+                      <>
+                        <AlertCircle className="w-4 h-4 text-amber-500" />
+                        <span className="text-sm">Geolocation not supported. Using fallback coordinates.</span>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* AI Recommend & Mode Badge */}
+                <div className="flex items-center gap-2">
                   <Button
                     onClick={handleAiRecommend}
                     disabled={isLoadingAi}
-                    className="bg-primary text-primary-foreground hover:shadow-[inset_0_0_20px_rgba(96,165,250,0.4)] transition-all duration-300"
+                    variant="default"
+                    className="flex-shrink-0"
                   >
                     {isLoadingAi ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        AI Recommend
-                      </>
+                      <Sparkles className="w-4 h-4 mr-2" />
                     )}
+                    {ambulanceLocation ? 'AI Recommend' : 'Get Location & AI Recommend'}
                   </Button>
+                  
+                  {aiRecommendations.length > 0 && (
+                    <Badge variant={isAiMode ? "default" : "secondary"} className="flex items-center gap-1.5">
+                      {isAiMode ? (
+                        <>
+                          🤖 Mode: Live (GROQ)
+                        </>
+                      ) : (
+                        <>
+                          ⚡ Mode: Offline (fallback)
+                        </>
+                      )}
+                    </Badge>
+                  )}
                 </div>
 
-                {aiRecommendations.length > 0 ? (
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="space-y-3">
-                      {aiRecommendations.map((rec, idx) => {
-                        const hospital = sortedHospitals.find(h => h.name === rec.hospitalName);
-                        if (!hospital) return null;
-                        
-                        return (
-                          <Card
-                            key={hospital.id}
-                            onClick={() => handleSelect(hospital)}
-                            className={cn(
-                              "cursor-pointer transition-all duration-300 border-2 bg-hospital-card",
-                              selectedForConfirm?.id === hospital.id
-                                ? "border-primary shadow-[0_0_20px_rgba(96,165,250,0.3)]"
-                                : "border-hospital-border hover:border-primary/50"
-                            )}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold border border-primary/30">
-                                    {idx + 1}
-                                  </div>
-                                  <div>
-                                    <h3 className="font-semibold text-lg text-hospital-text flex items-center gap-2">
-                                      {hospital.name}
-                                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                                        {rec.confidence}% match
-                                      </Badge>
-                                    </h3>
-                                    <p className="text-sm text-hospital-muted">{hospital.address}</p>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
-                                <div className="flex items-center text-hospital-muted">
-                                  <MapPin className="h-4 w-4 mr-1 text-primary" />
-                                  <span>{hospital.distance} km</span>
-                                </div>
-                                <div className="flex items-center text-hospital-muted">
-                                  <Clock className="h-4 w-4 mr-1 text-primary" />
-                                  <span>ETA: {calculateETA(hospital.distance)} min</span>
-                                </div>
-                              </div>
-
-                              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                                <p className="text-sm text-hospital-text">
-                                  <span className="font-semibold text-primary">AI Analysis:</span> {rec.reasoning}
-                                </p>
-                              </div>
-
-                              {hospital.equipment && hospital.equipment.length > 0 && (
-                                <div className="mt-3">
-                                  <p className="text-xs text-hospital-muted mb-1">Available Equipment:</p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {hospital.equipment.slice(0, 4).map((eq) => (
-                                      <Badge key={eq} variant="secondary" className="text-xs bg-hospital-dark">
-                                        {eq}
-                                      </Badge>
-                                    ))}
-                                    {hospital.equipment.length > 4 && (
-                                      <Badge variant="secondary" className="text-xs bg-hospital-dark">
-                                        +{hospital.equipment.length - 4} more
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
-                ) : (
-                  <ScrollArea className="h-[400px] pr-4">
-                    {filteredHospitals.length === 0 ? (
-                      <div className="text-center py-8 text-hospital-muted">
-                        No hospitals found matching your search.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {filteredHospitals.map((hospital) => renderHospitalCard(hospital))}
-                      </div>
-                    )}
-                  </ScrollArea>
+                {/* AI Recommendations */}
+                {aiRecommendations.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">AI Recommendations:</h3>
+                    {aiRecommendations.map((rec, idx) => {
+                      const hospital = sortedHospitals.find(h => h.name === rec.hospitalName);
+                      return hospital ? (
+                        <div key={idx} className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold">#{idx + 1} {rec.hospitalName}</span>
+                            <Badge variant="outline">{rec.confidence}% confidence</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{rec.reasoning}</p>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
                 )}
 
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder="Search hospitals by name, address, or equipment..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {/* Management buttons */}
                 <div className="flex gap-2">
-                  {onAddHospital && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddDialog(true)}
-                      className="flex-1"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add New Hospital
-                    </Button>
-                  )}
-                  {onImportHospitals && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowImportDialog(true)}
-                      className="flex-1"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Import CSV/JSON
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Hospital
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowImportDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import Hospitals
+                  </Button>
                 </div>
               </div>
 
-              {selectedForConfirm && (
-                <div className="flex gap-3 mt-4">
-                  <Button variant="outline" onClick={() => setSelectedForConfirm(null)} className="flex-1">
-                    Cancel
-                  </Button>
-                  <Button onClick={handleConfirm} className="flex-1">
-                    Confirm: {selectedForConfirm.name}
-                  </Button>
+              <ScrollArea className="flex-1 px-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                  {filteredHospitals.map((hospital) => renderHospitalCard(hospital))}
+                  {filteredHospitals.length === 0 && (
+                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                      No hospitals found matching your search.
+                    </div>
+                  )}
                 </div>
-              )}
+              </ScrollArea>
+
+              <div className="p-6 pt-4 border-t flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleConfirm} disabled={!selectedForConfirm}>
+                  Confirm Selection
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
+        </div>
 
-          <AddHospitalDialog
-            open={showAddDialog}
-            onOpenChange={setShowAddDialog}
-            onAdd={(hospital) => onAddHospital?.(hospital)}
-          />
-
-          <ImportHospitalsDialog
-            open={showImportDialog}
-            onOpenChange={setShowImportDialog}
-            onImport={(hospitals) => onImportHospitals?.(hospitals)}
-          />
-        </>
-      )}
-    </div>
+        {selectedHospital && (
+          <Card className="p-4 border-primary/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold">{selectedHospital.name}</h4>
+                  <div className="text-sm text-muted-foreground flex gap-3 mt-1">
+                    <span className="flex items-center gap-1">
+                      <Navigation className="w-3 h-3" />
+                      {selectedHospital.distance.toFixed(1)} km
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {calculateETA(selectedHospital.distance)} min
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {!readOnly && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(true)}
+                >
+                  Change
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
+      </div>
+    </>
   );
 };

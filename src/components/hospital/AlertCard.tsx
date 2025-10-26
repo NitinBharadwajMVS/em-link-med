@@ -34,7 +34,7 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
 
   const hospital = hospitals.find(h => h.id === alert.hospitalId);
   const equipmentCheck = alert.requiredEquipment 
-    ? hasRequiredEquipment(hospital || { id: '', name: '', distance: 0, address: '' }, alert.requiredEquipment)
+    ? hasRequiredEquipment(hospital || { id: '', name: '', distance: 0, address: '', latitude: 0, longitude: 0 }, alert.requiredEquipment)
     : { hasAll: true, missing: [] };
 
   const triageColors = {

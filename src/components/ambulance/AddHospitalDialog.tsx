@@ -24,6 +24,8 @@ export const AddHospitalDialog = ({ open, onOpenChange, onAdd }: AddHospitalDial
     address: '',
     contact: '',
     distance: '',
+    latitude: '',
+    longitude: '',
     equipment: [] as string[],
   });
 
@@ -41,6 +43,8 @@ export const AddHospitalDialog = ({ open, onOpenChange, onAdd }: AddHospitalDial
       address: formData.address,
       contact: formData.contact,
       distance: parseFloat(formData.distance) || 0,
+      latitude: parseFloat(formData.latitude) || 12.9716,
+      longitude: parseFloat(formData.longitude) || 77.5946,
       equipment: formData.equipment,
       specialties: [],
     };
@@ -54,6 +58,8 @@ export const AddHospitalDialog = ({ open, onOpenChange, onAdd }: AddHospitalDial
       address: '',
       contact: '',
       distance: '',
+      latitude: '',
+      longitude: '',
       equipment: [],
     });
     
@@ -114,6 +120,31 @@ export const AddHospitalDialog = ({ open, onOpenChange, onAdd }: AddHospitalDial
               onChange={(e) => setFormData({ ...formData, distance: e.target.value })}
               placeholder="e.g., 5.2"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="latitude">Latitude</Label>
+              <Input
+                id="latitude"
+                type="number"
+                step="0.0001"
+                value={formData.latitude}
+                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                placeholder="e.g., 12.9716"
+              />
+            </div>
+            <div>
+              <Label htmlFor="longitude">Longitude</Label>
+              <Input
+                id="longitude"
+                type="number"
+                step="0.0001"
+                value={formData.longitude}
+                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                placeholder="e.g., 77.5946"
+              />
+            </div>
           </div>
 
           <div>

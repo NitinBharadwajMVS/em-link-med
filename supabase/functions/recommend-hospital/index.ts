@@ -14,6 +14,13 @@ interface Hospital {
   address: string;
   equipment?: string[];
   specialties?: string[];
+  latitude: number;
+  longitude: number;
+}
+
+interface AmbulanceLocation {
+  latitude: number;
+  longitude: number;
 }
 
 interface PatientData {
@@ -36,12 +43,22 @@ serve(async (req) => {
   }
 
   try {
-    const { patientData, hospitalList } = await req.json() as {
+    const { patientData, hospitalList, ambulanceLocation } = await req.json() as {
       patientData: PatientData;
       hospitalList: Hospital[];
+      ambulanceLocation: AmbulanceLocation;
     };
 
+    if (!ambulanceLocation || typeof ambulanceLocation.latitude !== 'number' || typeof ambulanceLocation.longitude !== 'number') {
+      console.error('Missing or invalid ambulanceLocation');
+      return new Response(JSON.stringify({ error: 'ambulanceLocation (latitude, longitude) is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log('Received recommendation request for patient with triage:', patientData.triageLevel);
+    console.log('Ambulance location (audit):', ambulanceLocation);
 
     // Try to get API key from env first, then fall back to config import
     const apiKey = Deno.env.get('GROQ_API_KEY') || GROQ_API_KEY;
@@ -56,6 +73,8 @@ serve(async (req) => {
     // Build prompt for Groq
     const prompt = `You are a medical AI assistant helping to recommend the best hospital for an emergency patient.
 
+Ambulance Location: ${ambulanceLocation.latitude}, ${ambulanceLocation.longitude}
+
 Patient Information:
 - Triage Level: ${patientData.triageLevel}
 - Chief Complaint: ${patientData.complaint}
@@ -67,21 +86,25 @@ Patient Information:
   * GCS: ${patientData.vitals.gcs}
 - Required Equipment: ${patientData.requiredEquipment?.join(', ') || 'None specified'}
 
-Available Hospitals:
+Available Hospitals (within range):
 ${hospitalList.map((h, idx) => `
 ${idx + 1}. ${h.name}
    - Distance: ${h.distance} km
+   - Coordinates: ${h.latitude}, ${h.longitude}
    - Address: ${h.address}
    - Equipment: ${h.equipment?.join(', ') || 'Not specified'}
    - Specialties: ${h.specialties?.join(', ') || 'Not specified'}
 `).join('\n')}
 
-Task: Analyze the patient's condition and recommend the TOP 3 hospitals in ranked order. For each hospital provide:
-1. Hospital name (exactly as listed above)
-2. Confidence score (0-100)
-3. Brief reasoning (max 50 words)
+Task: Analyze the patient's condition and recommend the TOP 3 hospitals in ranked order.
 
-Consider: urgency based on triage level, required equipment availability, relevant specialties, and reasonable distance.
+CRITICAL PRIORITIZATION RULES:
+1. EQUIPMENT MATCH (70% weight): Hospitals MUST have all required equipment. If required equipment is specified, any hospital missing critical items should be heavily penalized or excluded.
+2. DISTANCE/TRAVEL TIME (30% weight): Prefer closer hospitals. Deprioritize any hospital beyond 5 km unless it's the only equipment match.
+3. For each hospital provide:
+   - Hospital name (exactly as listed above)
+   - Confidence score (0-100)
+   - Brief reasoning (max 50 words) explaining equipment match and distance tradeoff
 
 Respond ONLY with valid JSON in this exact format:
 {
