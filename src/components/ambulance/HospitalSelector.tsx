@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Hospital } from '@/types/patient';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -12,8 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Building2, Phone, Navigation, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Building2, Phone, Navigation, CheckCircle, AlertCircle, Clock, Search, Plus, Upload } from 'lucide-react';
 import { calculateETA, hasRequiredEquipment, sortHospitalsByPreference } from '@/utils/distanceCalculator';
+import { AddHospitalDialog } from './AddHospitalDialog';
+import { ImportHospitalsDialog } from './ImportHospitalsDialog';
 
 interface HospitalSelectorProps {
   hospitals: Hospital[];
@@ -22,6 +25,8 @@ interface HospitalSelectorProps {
   requiredEquipment?: string[];
   alertId?: string;
   readOnly?: boolean;
+  onAddHospital?: (hospital: Hospital) => void;
+  onImportHospitals?: (hospitals: Hospital[]) => void;
 }
 
 export const HospitalSelector = ({
@@ -31,12 +36,32 @@ export const HospitalSelector = ({
   requiredEquipment,
   alertId,
   readOnly = false,
+  onAddHospital,
+  onImportHospitals,
 }: HospitalSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedForConfirm, setSelectedForConfirm] = useState<Hospital | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   const sortedHospitals = sortHospitalsByPreference(hospitals, alertId);
   const selectedHospital = hospitals.find((h) => h.id === selectedHospitalId);
+
+  // Filter hospitals based on search query
+  const filteredHospitals = useMemo(() => {
+    if (!searchQuery.trim()) return sortedHospitals;
+    
+    const query = searchQuery.toLowerCase();
+    return sortedHospitals.filter((hospital) => {
+      return (
+        hospital.name.toLowerCase().includes(query) ||
+        hospital.address.toLowerCase().includes(query) ||
+        hospital.contact?.toLowerCase().includes(query) ||
+        hospital.equipment?.some((eq) => eq.toLowerCase().includes(query))
+      );
+    });
+  }, [sortedHospitals, searchQuery]);
 
   const handleSelect = (hospital: Hospital) => {
     setSelectedForConfirm(hospital);
@@ -59,24 +84,32 @@ export const HospitalSelector = ({
     return (
       <Card
         key={hospital.id}
-        className={`p-4 cursor-pointer transition-all hover:shadow-lg ${
-          isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
-        } ${isUnavailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`p-4 cursor-pointer transition-all border shadow-sm
+          ${isSelected ? 'ring-2 ring-primary bg-primary/5 border-primary' : 'border-border'}
+          ${isUnavailable ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50'}
+          focus-within:ring-2 focus-within:ring-primary/30`}
         onClick={() => !isUnavailable && handleSelect(hospital)}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            !isUnavailable && handleSelect(hospital);
+          }
+        }}
       >
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex items-start gap-3 flex-1">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-lg">{hospital.name}</h3>
-              <p className="text-sm text-muted-foreground">{hospital.address}</p>
-            </div>
+        <div className="flex items-start gap-4 mb-3">
+          <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-7 h-7 text-primary" />
           </div>
-          {isSelected && (
-            <CheckCircle className="w-6 h-6 text-primary" />
-          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-bold text-lg leading-tight">{hospital.name}</h3>
+              {isSelected && (
+                <CheckCircle className="w-6 h-6 text-primary flex-shrink-0" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">{hospital.address}</p>
+          </div>
         </div>
 
         <div className="flex gap-2 mb-3 flex-wrap">
@@ -138,6 +171,20 @@ export const HospitalSelector = ({
             Specialties: {hospital.specialties.join(', ')}
           </div>
         )}
+
+        {!isUnavailable && (
+          <Button
+            size="sm"
+            variant={isSelected ? "default" : "outline"}
+            className="w-full mt-3"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSelect(hospital);
+            }}
+          >
+            {isSelected ? 'Selected' : 'Select Hospital'}
+          </Button>
+        )}
       </Card>
     );
   };
@@ -195,42 +242,113 @@ export const HospitalSelector = ({
       )}
 
       {!readOnly && (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full border-ambulance-border hover:bg-ambulance-card">
-              {selectedHospital ? 'Change Hospital' : 'Select Hospital'}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Select Hospital</DialogTitle>
-              <DialogDescription>
-                Choose the best hospital based on distance, equipment, and availability.
-                {requiredEquipment && requiredEquipment.length > 0 && (
-                  <div className="mt-2 p-2 bg-primary/5 rounded-lg">
-                    <span className="font-semibold">Required Equipment: </span>
-                    {requiredEquipment.join(', ')}
+        <>
+          <Dialog open={isOpen} onOpenChange={(open) => {
+            setIsOpen(open);
+            if (!open) {
+              setSearchQuery('');
+              setSelectedForConfirm(null);
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full border-ambulance-border hover:bg-ambulance-card">
+                {selectedHospital ? 'Change Hospital' : 'Select Hospital'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0">
+              <DialogHeader className="px-6 pt-6 pb-4">
+                <DialogTitle>Select Hospital</DialogTitle>
+                <DialogDescription>
+                  Choose the best hospital based on distance, equipment, and availability.
+                  {requiredEquipment && requiredEquipment.length > 0 && (
+                    <div className="mt-2 p-2 bg-primary/5 rounded-lg text-sm">
+                      <span className="font-semibold">Required Equipment: </span>
+                      {requiredEquipment.join(', ')}
+                    </div>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="px-6 pb-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, locality, equipment, or phone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-2 max-h-96">
+                {filteredHospitals.length > 0 ? (
+                  <div className="space-y-3">
+                    {filteredHospitals.map(renderHospitalCard)}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                    <AlertCircle className="w-12 h-12 mb-2" />
+                    <p>No hospitals found matching your search</p>
                   </div>
                 )}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-3 mt-4">
-              {sortedHospitals.map(renderHospitalCard)}
-            </div>
-
-            {selectedForConfirm && (
-              <div className="flex gap-3 mt-4 sticky bottom-0 bg-background p-4 border-t">
-                <Button variant="outline" onClick={() => setSelectedForConfirm(null)} className="flex-1">
-                  Cancel
-                </Button>
-                <Button onClick={handleConfirm} className="flex-1 bg-primary">
-                  Confirm: {selectedForConfirm.name}
-                </Button>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+
+              <div className="px-6 py-4 border-t bg-muted/20">
+                <div className="flex gap-2 mb-3">
+                  {onAddHospital && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddDialog(true)}
+                      className="flex-1"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add New Hospital
+                    </Button>
+                  )}
+                  {onImportHospitals && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowImportDialog(true)}
+                      className="flex-1"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Import CSV/JSON
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Tip: Type to search or click "Add New Hospital" to include your facility for this demo
+                </p>
+              </div>
+
+              {selectedForConfirm && (
+                <div className="flex gap-3 px-6 py-4 border-t bg-background">
+                  <Button variant="outline" onClick={() => setSelectedForConfirm(null)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleConfirm} className="flex-1">
+                    Confirm: {selectedForConfirm.name}
+                  </Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          <AddHospitalDialog
+            open={showAddDialog}
+            onOpenChange={setShowAddDialog}
+            onAdd={(hospital) => onAddHospital?.(hospital)}
+          />
+
+          <ImportHospitalsDialog
+            open={showImportDialog}
+            onOpenChange={setShowImportDialog}
+            onImport={(hospitals) => onImportHospitals?.(hospitals)}
+          />
+        </>
       )}
     </div>
   );

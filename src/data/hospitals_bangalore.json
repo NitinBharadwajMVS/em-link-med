@@ -1,47 +1,902 @@
 [
   {
     "id": "1",
-    "name": "CityCare Hospital",
-    "distance": 1.4,
-    "address": "123 Main St, Indiranagar, Bangalore",
-    "contact": "+91-80-2555-1234",
-    "equipment": ["Ventilator", "ICU", "CT Scan", "Defibrillator", "Oxygen", "Cardiac Monitor"],
-    "specialties": ["Cardiology", "Emergency", "Neurology"]
+    "name": "Manipal Hospital Whitefield",
+    "distance": 1.2,
+    "address": "ITPL Main Rd, KIADB Export Promotion Industrial Area, Whitefield, Bangalore",
+    "contact": "+91-80-6629-6629",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Defibrillator", "Oxygen", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
   },
   {
     "id": "2",
-    "name": "General Medical Center",
+    "name": "Fortis Hospital Bannerghatta Road",
+    "distance": 1.5,
+    "address": "154/9, Opposite IIM, Bannerghatta Road, Bangalore",
+    "contact": "+91-80-6621-4444",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics", "Gastroenterology"]
+  },
+  {
+    "id": "3",
+    "name": "Apollo Hospitals Bannerghatta",
     "distance": 1.8,
-    "address": "456 Oak Ave, Koramangala, Bangalore",
-    "contact": "+91-80-2555-5678",
+    "address": "154/11, Opp. IIM-B, Bannerghatta Road, Bangalore",
+    "contact": "+91-80-2670-1066",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Oncology"]
+  },
+  {
+    "id": "4",
+    "name": "Columbia Asia Hospital Whitefield",
+    "distance": 2.1,
+    "address": "Survey No. 10P & 12P, Ramagondanahalli, Varthur Hobli, Whitefield, Bangalore",
+    "contact": "+91-80-6614-5555",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Pediatrics"]
+  },
+  {
+    "id": "5",
+    "name": "Narayana Multispeciality Hospital HSR Layout",
+    "distance": 2.3,
+    "address": "258/A, Bommasandra Industrial Area, Hosur Road, Bangalore",
+    "contact": "+91-80-7122-2222",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "6",
+    "name": "Sakra World Hospital",
+    "distance": 2.5,
+    "address": "SY NO 52/2 & 52/3, Devarabeesanahalli, Varthur Hobli, Bangalore",
+    "contact": "+91-80-4969-4969",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics", "Oncology"]
+  },
+  {
+    "id": "7",
+    "name": "St. John's Medical College Hospital",
+    "distance": 2.7,
+    "address": "Sarjapur Road, Koramangala, Bangalore",
+    "contact": "+91-80-4966-6666",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "8",
+    "name": "BGS Gleneagles Global Hospital",
+    "distance": 3.0,
+    "address": "67, Uttarahalli Road, Kengeri, Bangalore",
+    "contact": "+91-80-2227-7979",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Oncology"]
+  },
+  {
+    "id": "9",
+    "name": "Aster CMI Hospital",
+    "distance": 3.2,
+    "address": "43/2, New Airport Road, NH 7, Sahakara Nagar, Bangalore",
+    "contact": "+91-80-4344-4444",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Gastroenterology"]
+  },
+  {
+    "id": "10",
+    "name": "Mallya Hospital",
+    "distance": 3.5,
+    "address": "2, Vittal Mallya Road, Bangalore",
+    "contact": "+91-80-2227-7979",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Orthopedics"]
+  },
+  {
+    "id": "11",
+    "name": "Cloudnine Hospital Jayanagar",
+    "distance": 3.7,
+    "address": "1533, 9th Main, 3rd Block, Jayanagar, Bangalore",
+    "contact": "+91-80-4855-4855",
+    "equipment": ["ICU", "Ventilator", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Obstetrics", "Gynecology", "Pediatrics", "Emergency"]
+  },
+  {
+    "id": "12",
+    "name": "Sparsh Hospital Yeshwanthpur",
+    "distance": 4.0,
+    "address": "29P, Tumkur Main Road, Yeshwanthpur, Bangalore",
+    "contact": "+91-80-4315-4444",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Orthopedics", "Emergency", "Spine Surgery"]
+  },
+  {
+    "id": "13",
+    "name": "Vikram Hospital Mysore Road",
+    "distance": 4.2,
+    "address": "No.70/1, Millers Road, Vasanth Nagar, Bangalore",
+    "contact": "+91-80-2220-0000",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology"]
+  },
+  {
+    "id": "14",
+    "name": "Motherhood Hospital Indiranagar",
+    "distance": 4.5,
+    "address": "#466, 100 Feet Road, Indiranagar, Bangalore",
+    "contact": "+91-80-4855-5000",
+    "equipment": ["ICU", "Ventilator", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Obstetrics", "Gynecology", "Pediatrics", "Emergency"]
+  },
+  {
+    "id": "15",
+    "name": "HCG Cancer Hospital Kalinga Rao Road",
+    "distance": 4.7,
+    "address": "Tower 3, Sampangi Rama Nagar, Bangalore",
+    "contact": "+91-80-4660-4660",
+    "equipment": ["ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Oncology", "Emergency", "Radiation Therapy"]
+  },
+  {
+    "id": "16",
+    "name": "Ramaiah Memorial Hospital",
+    "distance": 5.0,
+    "address": "New BEL Road, MSRIT Post, Bangalore",
+    "contact": "+91-80-2360-9000",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "17",
+    "name": "Sagar Hospital Jayanagar",
+    "distance": 5.2,
+    "address": "44/54, 30th Cross, Jayanagar, Bangalore",
+    "contact": "+91-80-2663-0000",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology"]
+  },
+  {
+    "id": "18",
+    "name": "Bangalore Baptist Hospital",
+    "distance": 5.5,
+    "address": "Bellary Road, Hebbal, Bangalore",
+    "contact": "+91-80-2296-0480",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "19",
+    "name": "KIMS Hospital Bangalore",
+    "distance": 5.7,
+    "address": "5/112, MLA Colony Road, V V Puram, Bangalore",
+    "contact": "+91-80-2667-0000",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Nephrology"]
+  },
+  {
+    "id": "20",
+    "name": "Rangadore Memorial Hospital",
+    "distance": 6.0,
+    "address": "1st Cross, Shankarapuram, Basavanagudi, Bangalore",
+    "contact": "+91-80-2662-2266",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "21",
+    "name": "Motherhood Hospital Lullu Mall",
+    "distance": 6.2,
+    "address": "Lullu International Shopping Mall, Rajajinagar, Bangalore",
+    "contact": "+91-80-4855-5111",
+    "equipment": ["ICU", "Ventilator", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Obstetrics", "Gynecology", "Pediatrics", "Emergency"]
+  },
+  {
+    "id": "22",
+    "name": "Kauvery Hospital Electronic City",
+    "distance": 6.5,
+    "address": "Survey No. 92/1A & 92/1B, Hewlett Packard Avenue, Electronic City, Bangalore",
+    "contact": "+91-80-6801-6801",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "23",
+    "name": "Rainbow Children's Hospital Marathahalli",
+    "distance": 6.7,
+    "address": "Marathahalli-Sarjapur Outer Ring Road, Bangalore",
+    "contact": "+91-80-4934-4444",
+    "equipment": ["ICU", "Ventilator", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Pediatrics", "Neonatology", "Emergency"]
+  },
+  {
+    "id": "24",
+    "name": "Brindavan Hospital and Trauma Care Centre",
+    "distance": 7.0,
+    "address": "43, 16th Main Road, Malleswaram, Bangalore",
+    "contact": "+91-80-2334-4344",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Trauma", "Emergency", "Orthopedics"]
+  },
+  {
+    "id": "25",
+    "name": "Cloudnine Hospital Kalyan Nagar",
+    "distance": 7.2,
+    "address": "1st Floor, C/O Manasa Speciality Hospital, Outer Ring Road, Kalyan Nagar, Bangalore",
+    "contact": "+91-80-4855-4856",
+    "equipment": ["ICU", "Ventilator", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Obstetrics", "Gynecology", "Pediatrics", "Emergency"]
+  },
+  {
+    "id": "26",
+    "name": "Pristine Hospital",
+    "distance": 7.5,
+    "address": "Near Anand Rao Circle, Bangalore",
+    "contact": "+91-80-2226-8888",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "27",
+    "name": "Hosmat Hospital",
+    "distance": 7.7,
+    "address": "45 Magrath Road, Off Richmond Road, Bangalore",
+    "contact": "+91-80-2573-4347",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Orthopedics", "Trauma", "Emergency", "Spine Surgery"]
+  },
+  {
+    "id": "28",
+    "name": "Shanti Hospital",
+    "distance": 8.0,
+    "address": "No 8, 1st Main Road, Rajmahal Vilas Extension, Bangalore",
+    "contact": "+91-80-2345-6789",
     "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
     "specialties": ["Emergency", "General Medicine"]
   },
   {
-    "id": "3",
-    "name": "Emergency Care Unit",
-    "distance": 2.1,
-    "address": "789 Pine Rd, Whitefield, Bangalore",
-    "contact": "+91-80-2555-9012",
-    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis"],
-    "specialties": ["Emergency", "Trauma", "Neurology", "Cardiology"]
+    "id": "29",
+    "name": "Apollo Clinic JP Nagar",
+    "distance": 8.2,
+    "address": "14th Main Road, JP Nagar 3rd Phase, Bangalore",
+    "contact": "+91-80-2659-4949",
+    "equipment": ["X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
   },
   {
-    "id": "4",
-    "name": "Apollo Specialty Hospital",
-    "distance": 3.2,
-    "address": "15 MG Road, Bangalore",
-    "contact": "+91-80-2555-3456",
+    "id": "30",
+    "name": "Sheela Multispeciality Hospital",
+    "distance": 8.5,
+    "address": "Old Madras Road, Near Indiranagar, Bangalore",
+    "contact": "+91-80-2528-0444",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "31",
+    "name": "Jindal Sanjeevani Multispeciality Hospital",
+    "distance": 8.7,
+    "address": "Bellary Road, Sahakara Nagar, Bangalore",
+    "contact": "+91-80-2354-7272",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Cardiology"]
+  },
+  {
+    "id": "32",
+    "name": "Adichunchanagiri Institute of Medical Sciences",
+    "distance": 9.0,
+    "address": "B G Nagar, Nagamangala Taluk, Mandya District",
+    "contact": "+91-8234-287500",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "33",
+    "name": "Vydehi Institute of Medical Sciences",
+    "distance": 9.2,
+    "address": "Whitefield, Bangalore",
+    "contact": "+91-80-2845-2999",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "34",
+    "name": "Koshys Hospital",
+    "distance": 9.5,
+    "address": "67/1, Brigade Road, Bangalore",
+    "contact": "+91-80-2559-7979",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "35",
+    "name": "Hephzibah Hospital",
+    "distance": 9.7,
+    "address": "1st Cross, 2nd Main, Nayandahalli, Bangalore",
+    "contact": "+91-80-2851-8888",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "36",
+    "name": "Manipal Hospital Sarjapur Road",
+    "distance": 10.0,
+    "address": "Sarjapur Main Road, Bellandur, Bangalore",
+    "contact": "+91-80-6112-9999",
     "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
     "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
   },
   {
-    "id": "5",
-    "name": "Fortis Healthcare",
-    "distance": 4.5,
-    "address": "45 Bannerghatta Road, Bangalore",
-    "contact": "+91-80-2555-7890",
-    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis", "Cath Lab"],
-    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics", "Gastroenterology"]
+    "id": "37",
+    "name": "Fortis Hospital Cunningham Road",
+    "distance": 10.2,
+    "address": "14, Cunningham Road, Bangalore",
+    "contact": "+91-80-6621-4444",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
+  },
+  {
+    "id": "38",
+    "name": "Columbia Asia Hospital Hebbal",
+    "distance": 10.5,
+    "address": "Kirloskar Business Park, Bellary Road, Hebbal, Bangalore",
+    "contact": "+91-80-6614-5757",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Pediatrics"]
+  },
+  {
+    "id": "39",
+    "name": "Sagar Hospital Banashankari",
+    "distance": 10.7,
+    "address": "28/29, KIADB Main Road, Kumaraswamy Layout, Bangalore",
+    "contact": "+91-80-2663-1111",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology"]
+  },
+  {
+    "id": "40",
+    "name": "Chinmaya Mission Hospital",
+    "distance": 11.0,
+    "address": "Indiranagar, Bangalore",
+    "contact": "+91-80-2528-5000",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "41",
+    "name": "Apollo Hospitals Sheshadripuram",
+    "distance": 11.2,
+    "address": "No 154/11, Sheshadripuram, Bangalore",
+    "contact": "+91-80-2670-1077",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Oncology"]
+  },
+  {
+    "id": "42",
+    "name": "Spandana Hospital",
+    "distance": 11.5,
+    "address": "17th Cross, Malleshwaram, Bangalore",
+    "contact": "+91-80-2334-5555",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "43",
+    "name": "Jnana Sanjeevini Medical Centre",
+    "distance": 11.7,
+    "address": "17th Cross, Malleswaram, Bangalore",
+    "contact": "+91-80-2334-4567",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "44",
+    "name": "Seetha Nursing Home",
+    "distance": 12.0,
+    "address": "Wilson Garden, Bangalore",
+    "contact": "+91-80-2222-3333",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "45",
+    "name": "Gleneagles Global Health City",
+    "distance": 12.2,
+    "address": "Uttarahalli Road, Kengeri, Bangalore",
+    "contact": "+91-80-2227-7979",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Oncology"]
+  },
+  {
+    "id": "46",
+    "name": "Ashwini Hospital",
+    "distance": 12.5,
+    "address": "R T Nagar, Bangalore",
+    "contact": "+91-80-2353-6666",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "47",
+    "name": "Ayush Hospital",
+    "distance": 12.7,
+    "address": "Jayanagar 4th Block, Bangalore",
+    "contact": "+91-80-2664-4444",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "48",
+    "name": "Meenakshi Mission Hospital",
+    "distance": 13.0,
+    "address": "Lake Road, Bangalore",
+    "contact": "+91-80-2212-3456",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Cardiology"]
+  },
+  {
+    "id": "49",
+    "name": "Padmavathi Nursing Home",
+    "distance": 13.2,
+    "address": "JP Nagar, Bangalore",
+    "contact": "+91-80-2659-8888",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "50",
+    "name": "Medall Diagnostics and Hospital",
+    "distance": 13.5,
+    "address": "HSR Layout, Bangalore",
+    "contact": "+91-80-4192-5555",
+    "equipment": ["ICU", "CT Scan", "MRI", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Diagnostics"]
+  },
+  {
+    "id": "51",
+    "name": "Kauvery Hospital Marathahalli",
+    "distance": 13.7,
+    "address": "Marathahalli Outer Ring Road, Bangalore",
+    "contact": "+91-80-6801-6802",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Dialysis"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "52",
+    "name": "Sparsh Hospital Rajarajeshwari Nagar",
+    "distance": 14.0,
+    "address": "Rajarajeshwari Nagar, Bangalore",
+    "contact": "+91-80-4315-4545",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Orthopedics", "Emergency", "Spine Surgery"]
+  },
+  {
+    "id": "53",
+    "name": "Aarna Hospital",
+    "distance": 14.2,
+    "address": "Hennur Main Road, Bangalore",
+    "contact": "+91-80-2841-9999",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "54",
+    "name": "Sree Sai Multispeciality Hospital",
+    "distance": 14.5,
+    "address": "Basaveshwara Nagar, Bangalore",
+    "contact": "+91-80-2341-2345",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "55",
+    "name": "Aster RV Hospital",
+    "distance": 14.7,
+    "address": "CA-37, 24th Main, JP Nagar 1st Phase, Bangalore",
+    "contact": "+91-80-6692-0000",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
+  },
+  {
+    "id": "56",
+    "name": "Cloudnine Hospital Malleshwaram",
+    "distance": 15.0,
+    "address": "6th Main Road, Malleshwaram, Bangalore",
+    "contact": "+91-80-4855-4857",
+    "equipment": ["ICU", "Ventilator", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Obstetrics", "Gynecology", "Pediatrics", "Emergency"]
+  },
+  {
+    "id": "57",
+    "name": "Prashanth Hospital",
+    "distance": 15.2,
+    "address": "Uttarahalli Main Road, Bangalore",
+    "contact": "+91-80-2861-9999",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "58",
+    "name": "Bhagwan Mahaveer Jain Hospital",
+    "distance": 15.5,
+    "address": "Millers Road, Vasanth Nagar, Bangalore",
+    "contact": "+91-80-4340-4444",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "59",
+    "name": "Sagar Hospital DSI",
+    "distance": 15.7,
+    "address": "Kumaraswamy Layout, Bangalore",
+    "contact": "+91-80-2663-2222",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology"]
+  },
+  {
+    "id": "60",
+    "name": "Samarpan Hospital",
+    "distance": 16.0,
+    "address": "Nagarbhavi, Bangalore",
+    "contact": "+91-80-2318-7777",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "61",
+    "name": "People Tree Hospitals",
+    "distance": 16.2,
+    "address": "Road No 12, Banjara Hills, Yeshwanthpur, Bangalore",
+    "contact": "+91-80-4012-5000",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
+  },
+  {
+    "id": "62",
+    "name": "Lakshmi Hospital",
+    "distance": 16.5,
+    "address": "Nagasandra, Bangalore",
+    "contact": "+91-80-2371-2222",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "63",
+    "name": "Sanjeevani Hospital",
+    "distance": 16.7,
+    "address": "Vijayanagar, Bangalore",
+    "contact": "+91-80-2330-4321",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "64",
+    "name": "Nirmala Hospital",
+    "distance": 17.0,
+    "address": "Kothanur, Bangalore",
+    "contact": "+91-80-2844-5555",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "65",
+    "name": "St Martha's Hospital",
+    "distance": 17.2,
+    "address": "5 Nrupathunga Road, Bangalore",
+    "contact": "+91-80-2227-8600",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "66",
+    "name": "Sarvodaya Hospital",
+    "distance": 17.5,
+    "address": "8th Main, Sector 8, HSR Layout, Bangalore",
+    "contact": "+91-80-4192-8888",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "67",
+    "name": "Sri Sathya Sai Institute of Higher Medical Sciences",
+    "distance": 17.7,
+    "address": "Whitefield, Bangalore",
+    "contact": "+91-80-2847-5050",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor", "Cath Lab"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Cardiac Surgery"]
+  },
+  {
+    "id": "68",
+    "name": "Sankalp Hospital",
+    "distance": 18.0,
+    "address": "Yelahanka, Bangalore",
+    "contact": "+91-80-2846-7777",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "69",
+    "name": "Netra Hospital",
+    "distance": 18.2,
+    "address": "JP Nagar 6th Phase, Bangalore",
+    "contact": "+91-80-2659-4455",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "Ophthalmology"]
+  },
+  {
+    "id": "70",
+    "name": "Aashraya Hospital",
+    "distance": 18.5,
+    "address": "Electronic City Phase 2, Bangalore",
+    "contact": "+91-80-2782-3456",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "71",
+    "name": "Giridhar Eye Institute",
+    "distance": 18.7,
+    "address": "4th Block, Rajajinagar, Bangalore",
+    "contact": "+91-80-2331-3311",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Ophthalmology", "Emergency"]
+  },
+  {
+    "id": "72",
+    "name": "Vasan Healthcare",
+    "distance": 19.0,
+    "address": "Koramangala 5th Block, Bangalore",
+    "contact": "+91-80-4115-8888",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Ophthalmology"]
+  },
+  {
+    "id": "73",
+    "name": "Abhaya Hospital",
+    "distance": 19.2,
+    "address": "Banashankari 2nd Stage, Bangalore",
+    "contact": "+91-80-2671-9999",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "74",
+    "name": "Rajarajeshwari Medical College Hospital",
+    "distance": 19.5,
+    "address": "Mysore Road, Kambipura, Bangalore",
+    "contact": "+91-80-2841-0000",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Trauma"]
+  },
+  {
+    "id": "75",
+    "name": "Varthur Road Multispeciality Hospital",
+    "distance": 19.7,
+    "address": "Varthur Main Road, Bangalore",
+    "contact": "+91-80-2844-6666",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "76",
+    "name": "Samraksha Hospital",
+    "distance": 20.0,
+    "address": "Basaveshwara Nagar, Bangalore",
+    "contact": "+91-80-2341-5678",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "77",
+    "name": "Shankar Netralaya",
+    "distance": 20.2,
+    "address": "Rest House Road, Bangalore",
+    "contact": "+91-80-2559-7373",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Ophthalmology", "Emergency"]
+  },
+  {
+    "id": "78",
+    "name": "Medica Superspecialty Hospital",
+    "distance": 20.5,
+    "address": "Old Airport Road, Bangalore",
+    "contact": "+91-80-4190-4190",
+    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
+  },
+  {
+    "id": "79",
+    "name": "Cure Well Hospital",
+    "distance": 20.7,
+    "address": "Peenya Industrial Area, Bangalore",
+    "contact": "+91-80-2839-5555",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "80",
+    "name": "Akshaya Hospital",
+    "distance": 21.0,
+    "address": "Domlur Layout, Bangalore",
+    "contact": "+91-80-2535-6789",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "81",
+    "name": "Vivekananda Memorial Hospital",
+    "distance": 21.2,
+    "address": "Sadashivanagar, Bangalore",
+    "contact": "+91-80-2361-5100",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "82",
+    "name": "Sumathi Hospital",
+    "distance": 21.5,
+    "address": "Mahadevapura, Bangalore",
+    "contact": "+91-80-2845-7890",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "83",
+    "name": "Shree Krishna Hospital",
+    "distance": 21.7,
+    "address": "Rajajinagar 3rd Block, Bangalore",
+    "contact": "+91-80-2331-6789",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "84",
+    "name": "Ananya Hospital",
+    "distance": 22.0,
+    "address": "Thanisandra Main Road, Bangalore",
+    "contact": "+91-80-2846-8888",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "85",
+    "name": "Apollo Spectra Hospital Koramangala",
+    "distance": 22.2,
+    "address": "80 Feet Road, Koramangala, Bangalore",
+    "contact": "+91-80-4967-4967",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Surgery", "Orthopedics"]
+  },
+  {
+    "id": "86",
+    "name": "Jeevika Hospital",
+    "distance": 22.5,
+    "address": "Vidyaranyapura, Bangalore",
+    "contact": "+91-80-2361-7777",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "87",
+    "name": "Namma Hospital",
+    "distance": 22.7,
+    "address": "RT Nagar 1st Block, Bangalore",
+    "contact": "+91-80-2353-9999",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "88",
+    "name": "Srikara Hospital",
+    "distance": 23.0,
+    "address": "Bommanahalli, Bangalore",
+    "contact": "+91-80-2783-4567",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "89",
+    "name": "Sushrutha Hospital",
+    "distance": 23.2,
+    "address": "Jayanagar 9th Block, Bangalore",
+    "contact": "+91-80-2664-6789",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "90",
+    "name": "City Hospital",
+    "distance": 23.5,
+    "address": "Malleshwaram 8th Main, Bangalore",
+    "contact": "+91-80-2334-7890",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "91",
+    "name": "Aditya Multispeciality Hospital",
+    "distance": 23.7,
+    "address": "Nagavara, Bangalore",
+    "contact": "+91-80-2353-4567",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "92",
+    "name": "Rainbow Hospital",
+    "distance": 24.0,
+    "address": "BTM Layout, Bangalore",
+    "contact": "+91-80-2678-1234",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "93",
+    "name": "Vatsalya Hospital",
+    "distance": 24.2,
+    "address": "Kalyan Nagar, Bangalore",
+    "contact": "+91-80-2546-7890",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "94",
+    "name": "Amrutha Hospital",
+    "distance": 24.5,
+    "address": "Basaveshwara Nagar, Bangalore",
+    "contact": "+91-80-2341-9999",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "95",
+    "name": "Dhanya Hospital",
+    "distance": 24.7,
+    "address": "Ramamurthy Nagar, Bangalore",
+    "contact": "+91-80-2545-6789",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "96",
+    "name": "Jeevan Hospital",
+    "distance": 25.0,
+    "address": "Banashankari 3rd Stage, Bangalore",
+    "contact": "+91-80-2671-7777",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "97",
+    "name": "Tanvi Hospital",
+    "distance": 25.2,
+    "address": "JP Nagar 7th Phase, Bangalore",
+    "contact": "+91-80-2659-1111",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
+  },
+  {
+    "id": "98",
+    "name": "Prathima Hospital",
+    "distance": 25.5,
+    "address": "Kanakapura Road, Bangalore",
+    "contact": "+91-80-2861-2222",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "99",
+    "name": "Nandini Hospital",
+    "distance": 25.7,
+    "address": "Yeshwanthpur, Bangalore",
+    "contact": "+91-80-2372-3456",
+    "equipment": ["ICU", "X-Ray", "Oxygen", "Defibrillator"],
+    "specialties": ["Emergency", "General Medicine"]
+  },
+  {
+    "id": "100",
+    "name": "Manjunatha Hospital",
+    "distance": 26.0,
+    "address": "Rajajinagar 4th Block, Bangalore",
+    "contact": "+91-80-2331-4567",
+    "equipment": ["ICU", "CT Scan", "X-Ray", "Oxygen", "Defibrillator", "Cardiac Monitor"],
+    "specialties": ["Emergency", "General Medicine", "Surgery"]
   }
 ]

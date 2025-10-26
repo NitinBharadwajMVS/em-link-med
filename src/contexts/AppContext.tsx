@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Patient, Alert, Hospital, AuditLog } from '@/types/patient';
 import hospitalsData from '@/data/hospitals_bangalore.json';
+
+const HOSPITALS_STORAGE_KEY = 'ambulance_hospitals_data';
 
 interface AppContextType {
   patients: Patient[];
@@ -13,13 +15,33 @@ interface AppContextType {
   completeCase: (alertId: string) => void;
   changeHospital: (alertId: string, newHospitalId: string, reason: string) => void;
   markHospitalUnavailable: (alertId: string, hospitalId: string, reason: string) => void;
+  addHospital: (hospital: Hospital) => void;
+  importHospitals: (hospitals: Hospital[]) => void;
   login: (userId: string) => void;
   logout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const mockHospitals: Hospital[] = hospitalsData as Hospital[];
+const loadHospitalsFromStorage = (): Hospital[] => {
+  try {
+    const stored = localStorage.getItem(HOSPITALS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Failed to load hospitals from storage:', error);
+  }
+  return hospitalsData as Hospital[];
+};
+
+const saveHospitalsToStorage = (hospitals: Hospital[]) => {
+  try {
+    localStorage.setItem(HOSPITALS_STORAGE_KEY, JSON.stringify(hospitals));
+  } catch (error) {
+    console.error('Failed to save hospitals to storage:', error);
+  }
+};
 
 const mockPatients: Patient[] = [
   {
@@ -53,8 +75,12 @@ const mockPatients: Patient[] = [
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [patients, setPatients] = useState<Patient[]>(mockPatients);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [hospitals] = useState<Hospital[]>(mockHospitals);
+  const [hospitals, setHospitals] = useState<Hospital[]>(loadHospitalsFromStorage());
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    saveHospitalsToStorage(hospitals);
+  }, [hospitals]);
 
   const addPatient = (patient: Patient) => {
     setPatients((prev) => [...prev, patient]);
@@ -200,6 +226,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCurrentUser(userId);
   };
 
+  const addHospital = (hospital: Hospital) => {
+    setHospitals((prev) => [...prev, hospital]);
+  };
+
+  const importHospitals = (newHospitals: Hospital[]) => {
+    setHospitals((prev) => [...prev, ...newHospitals]);
+  };
+
   const logout = () => {
     setCurrentUser(null);
   };
@@ -217,6 +251,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         completeCase,
         changeHospital,
         markHospitalUnavailable,
+        addHospital,
+        importHospitals,
         login,
         logout,
       }}
