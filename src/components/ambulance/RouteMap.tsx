@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Hospital } from '@/types/patient';
@@ -33,37 +33,29 @@ const selectedHospitalIcon = L.icon({
   popupAnchor: [0, -40],
 });
 
-function MapController({ bounds }: { bounds: L.LatLngBoundsExpression }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (map && bounds) {
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-  }, [map, bounds]);
-
-  return null;
-}
-
 export const RouteMap = ({ 
   ambulanceLocation, 
   hospitals, 
   selectedHospital,
   routeCoordinates 
 }: RouteMapProps) => {
-  // Calculate bounds to fit all markers
+  // Calculate center and bounds
   const allPoints: L.LatLngTuple[] = [
     [ambulanceLocation.lat, ambulanceLocation.lng],
     ...hospitals.map(h => [h.coordinates.lat, h.coordinates.lng] as L.LatLngTuple),
   ];
 
   const bounds = L.latLngBounds(allPoints);
+  const center = bounds.getCenter();
 
   return (
     <div className="w-full h-[500px] rounded-lg overflow-hidden border-2 border-ambulance-border shadow-xl">
       <MapContainer
-        center={[ambulanceLocation.lat, ambulanceLocation.lng] as L.LatLngTuple}
-        zoom={13}
+        key={`${center.lat}-${center.lng}`}
+        center={[center.lat, center.lng]}
+        zoom={12}
+        bounds={bounds}
+        boundsOptions={{ padding: [50, 50] }}
         className="w-full h-full"
         style={{ background: '#1a1f2e' }}
       >
@@ -71,10 +63,11 @@ export const RouteMap = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
-        
-        <MapController bounds={bounds} />
 
-        <Marker position={[ambulanceLocation.lat, ambulanceLocation.lng] as L.LatLngTuple} icon={ambulanceIcon as any}>
+        <Marker 
+          position={[ambulanceLocation.lat, ambulanceLocation.lng]} 
+          icon={ambulanceIcon}
+        >
           <Popup>
             <div className="text-center font-semibold">
               Ambulance Location
@@ -85,8 +78,8 @@ export const RouteMap = ({
         {hospitals.map((hospital) => (
           <Marker
             key={hospital.id}
-            position={[hospital.coordinates.lat, hospital.coordinates.lng] as L.LatLngTuple}
-            icon={(selectedHospital?.id === hospital.id ? selectedHospitalIcon : hospitalIcon) as any}
+            position={[hospital.coordinates.lat, hospital.coordinates.lng]}
+            icon={selectedHospital?.id === hospital.id ? selectedHospitalIcon : hospitalIcon}
           >
             <Popup>
               <div className="space-y-1">

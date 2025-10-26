@@ -1,8 +1,7 @@
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Alert } from '@/types/patient';
 import { Badge } from '@/components/ui/badge';
-import { useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 
 interface AlertMapProps {
@@ -51,25 +50,14 @@ function getIconForTriage(triage: string): L.Icon {
   }
 }
 
-function MapController({ center }: { center: L.LatLngTuple }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (map && center) {
-      map.setView(center, 12);
-    }
-  }, [map, center]);
-
-  return null;
-}
-
 export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
   const alertsWithLocation = alerts.filter(alert => alert.ambulanceLocation);
 
   return (
     <div className="w-full h-[400px] rounded-lg overflow-hidden border-2 border-border shadow-lg">
       <MapContainer
-        center={[hospitalLocation.lat, hospitalLocation.lng] as L.LatLngTuple}
+        key={`${hospitalLocation.lat}-${hospitalLocation.lng}`}
+        center={[hospitalLocation.lat, hospitalLocation.lng]}
         zoom={12}
         className="w-full h-full"
       >
@@ -77,10 +65,11 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
-        
-        <MapController center={[hospitalLocation.lat, hospitalLocation.lng]} />
 
-        <Marker position={[hospitalLocation.lat, hospitalLocation.lng] as L.LatLngTuple} icon={hospitalIcon as any}>
+        <Marker 
+          position={[hospitalLocation.lat, hospitalLocation.lng]} 
+          icon={hospitalIcon}
+        >
           <Popup>
             <div className="text-center font-semibold">
               Your Hospital
@@ -91,8 +80,8 @@ export const AlertMap = ({ alerts, hospitalLocation }: AlertMapProps) => {
         {alertsWithLocation.map((alert) => (
           <Marker
             key={alert.id}
-            position={[alert.ambulanceLocation!.lat, alert.ambulanceLocation!.lng] as L.LatLngTuple}
-            icon={getIconForTriage(alert.patient.triageLevel) as any}
+            position={[alert.ambulanceLocation!.lat, alert.ambulanceLocation!.lng]}
+            icon={getIconForTriage(alert.patient.triageLevel)}
           >
             <Popup>
               <div className="space-y-2 min-w-[200px]">
