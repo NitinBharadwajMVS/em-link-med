@@ -39,6 +39,31 @@ export const sortHospitalsByPreference = (
     .sort((a, b) => a.distance - b.distance);
 };
 
+// Deterministic fallback recommendation logic
+export const getFallbackRecommendation = (
+  hospitals: Hospital[],
+  requiredEquipment?: string[]
+): Hospital[] => {
+  return [...hospitals]
+    .map(hospital => {
+      const equipmentMatch = hasRequiredEquipment(hospital, requiredEquipment);
+      const equipmentScore = equipmentMatch.hasAll ? 100 : 
+        Math.max(0, 100 - (equipmentMatch.missing.length * 20));
+      
+      // Distance score (closer is better, max 50 points)
+      const distanceScore = Math.max(0, 50 - hospital.distance * 2);
+      
+      const totalScore = equipmentScore * 0.7 + distanceScore * 0.3;
+      
+      return {
+        ...hospital,
+        score: Math.round(totalScore),
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+};
+
 // Check if hospital has required equipment
 export const hasRequiredEquipment = (
   hospital: Hospital,

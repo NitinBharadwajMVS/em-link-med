@@ -1,1 +1,4 @@
 project_id = "vtcnosxbkzxeojnhidiy"
+
+[functions.recommend-hospital]
+verify_jwt = false
