@@ -88,12 +88,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   const addPatient = (patient: Patient) => {
-    setPatients((prev) => [...prev, patient]);
+    if (!patient || !patient.id) {
+      console.warn('Invalid patient data:', patient);
+      return;
+    }
+    setPatients((previousPatients) => [...previousPatients, patient]);
   };
 
   const sendAlert = (patient: Patient, ambulanceId: string, ambulanceLocation?: { lat: number; lng: number }): Hospital => {
-    const availableHospitals = hospitals.filter(h => h.canAccept);
+    // Validate input data
+    if (!patient || !ambulanceId) {
+      console.warn('Invalid alert data:', { patient, ambulanceId });
+      throw new Error('Invalid patient or ambulance data');
+    }
+
+    const availableHospitals = hospitals.filter(hospital => hospital.canAccept);
     const targetHospitals = availableHospitals.length > 0 ? availableHospitals : hospitals;
+    
+    if (targetHospitals.length === 0) {
+      console.warn('No hospitals available');
+      throw new Error('No hospitals available');
+    }
+
     const nearestHospital = targetHospitals[Math.floor(Math.random() * targetHospitals.length)];
     
     const newAlert: Alert = {
@@ -107,19 +123,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       ambulanceLocation: ambulanceLocation || { lat: 40.7489, lng: -73.9876 },
       requiredEquipment: generateRequiredEquipment(patient),
     };
-    setAlerts((prev) => [...prev, newAlert]);
+    
+    setAlerts((previousAlerts) => [...previousAlerts, newAlert]);
     return nearestHospital;
   };
 
   const updateAlertStatus = (alertId: string, status: 'acknowledged' | 'accepted' | 'rejected') => {
-    setAlerts((prev) =>
-      prev.map((alert) => (alert.id === alertId ? { ...alert, status } : alert))
+    if (!alertId || !status) {
+      console.warn('Invalid alert status update:', { alertId, status });
+      return;
+    }
+
+    setAlerts((previousAlerts) =>
+      previousAlerts.map((alert) => 
+        alert.id === alertId ? { ...alert, status } : alert
+      )
     );
   };
 
   const updateHospitalStatus = (hospitalId: string, canAccept: boolean) => {
-    setHospitals((prev) =>
-      prev.map((hospital) =>
+    if (!hospitalId || typeof canAccept !== 'boolean') {
+      console.warn('Invalid hospital status update:', { hospitalId, canAccept });
+      return;
+    }
+
+    setHospitals((previousHospitals) =>
+      previousHospitals.map((hospital) =>
         hospital.id === hospitalId ? { ...hospital, canAccept } : hospital
       )
     );

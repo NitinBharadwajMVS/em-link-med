@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { TriageButton } from '@/components/ambulance/TriageButton';
 import { PatientForm } from '@/components/ambulance/PatientForm';
 import { HospitalSelector } from '@/components/ambulance/HospitalSelector';
@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Ambulance, MapPin } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { calculateRoute } from '@/utils/routeService';
+import { throttle } from '@/utils/debounce';
+import { RATE_LIMITS } from '@/config/api';
 
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
@@ -26,17 +28,27 @@ const AmbulanceDashboard = () => {
     navigate('/');
   };
 
-  const handleSelectHospital = async (hospital: Hospital) => {
+  // Throttle route calculations to prevent API spam
+  const throttledRouteCalculation = useRef(
+    throttle(async (ambulanceLoc: typeof ambulanceLocation, hospitalCoords: Hospital['coordinates']) => {
+      try {
+        const route = await calculateRoute(ambulanceLoc, hospitalCoords);
+        const positions: Array<[number, number]> = route.coordinates.map(
+          coord => [coord[1], coord[0]]
+        );
+        setRouteCoordinates(positions);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.warn('Route calculation failed:', errorMessage);
+        setRouteCoordinates([]);
+      }
+    }, RATE_LIMITS.routeCalculation.minInterval)
+  ).current;
+
+  const handleSelectHospital = useCallback((hospital: Hospital) => {
     setSelectedHospital(hospital);
-    try {
-      const route = await calculateRoute(ambulanceLocation, hospital.coordinates);
-      const positions: Array<[number, number]> = route.coordinates.map(coord => [coord[1], coord[0]]);
-      setRouteCoordinates(positions);
-    } catch (error) {
-      console.error('Route calculation failed:', error);
-      setRouteCoordinates([]);
-    }
-  };
+    throttledRouteCalculation(ambulanceLocation, hospital.coordinates);
+  }, [ambulanceLocation, throttledRouteCalculation]);
 
   return (
     <div

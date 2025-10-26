@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fix default marker icon issue
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+// Initialize Leaflet icons only once
+let leafletInitialized = false;
+
+function initializeLeafletIcons() {
+  if (leafletInitialized) return;
+  
+  try {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+    leafletInitialized = true;
+  } catch (error) {
+    console.warn('Leaflet icon initialization failed:', error);
+  }
+}
 
 interface SimpleAlertMapProps {
   hospitalPosition: [number, number];
@@ -24,6 +35,42 @@ interface SimpleAlertMapProps {
 
 export function SimpleAlertMap(props: SimpleAlertMapProps) {
   const { hospitalPosition, ambulances } = props;
+  const mapInitialized = useRef(false);
+
+  useEffect(() => {
+    if (!mapInitialized.current) {
+      initializeLeafletIcons();
+      mapInitialized.current = true;
+    }
+  }, []);
+
+  // Defensive guards
+  if (!hospitalPosition || hospitalPosition.length !== 2) {
+    return (
+      <div style={{ 
+        width: '100%', 
+        height: '400px', 
+        borderRadius: '8px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: 'hsl(var(--muted))',
+        color: 'hsl(var(--muted-foreground))'
+      }}>
+        <p>Map unavailable: Invalid hospital position</p>
+      </div>
+    );
+  }
+
+  const validAmbulances = Array.isArray(ambulances) 
+    ? ambulances.filter(ambulance => 
+        ambulance.position && 
+        Array.isArray(ambulance.position) && 
+        ambulance.position.length === 2 &&
+        ambulance.id &&
+        ambulance.patientName
+      )
+    : [];
 
   return (
     <div style={{ width: '100%', height: '400px', borderRadius: '8px', overflow: 'hidden' }}>
@@ -31,6 +78,7 @@ export function SimpleAlertMap(props: SimpleAlertMapProps) {
         center={hospitalPosition}
         zoom={12}
         style={{ width: '100%', height: '100%' }}
+        scrollWheelZoom={true}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -45,7 +93,7 @@ export function SimpleAlertMap(props: SimpleAlertMapProps) {
           </Popup>
         </Marker>
 
-        {ambulances.map((ambulance) => (
+        {validAmbulances.map((ambulance) => (
           <Marker key={ambulance.id} position={ambulance.position}>
             <Popup>
               <div style={{ padding: '8px', minWidth: '150px' }}>
