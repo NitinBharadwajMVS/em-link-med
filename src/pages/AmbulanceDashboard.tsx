@@ -1,54 +1,22 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import { TriageButton } from '@/components/ambulance/TriageButton';
 import { PatientForm } from '@/components/ambulance/PatientForm';
-import { HospitalSelector } from '@/components/ambulance/HospitalSelector';
-import { SimpleMap } from '@/components/ambulance/SimpleMap';
-import { TriageLevel, Hospital } from '@/types/patient';
+import { TriageLevel } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Ambulance, MapPin } from 'lucide-react';
+import { LogOut, Ambulance } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { calculateRoute } from '@/utils/routeService';
-import { throttle } from '@/utils/debounce';
-import { RATE_LIMITS } from '@/config/api';
 
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
-  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
-  const [routeCoordinates, setRouteCoordinates] = useState<Array<[number, number]>>([]);
-  const { logout, hospitals } = useApp();
+  const { logout } = useApp();
   const navigate = useNavigate();
-  
-  // Simulated ambulance location (NYC area)
-  const ambulanceLocation = { lat: 40.7489, lng: -73.9876 };
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
-
-  // Throttle route calculations to prevent API spam
-  const throttledRouteCalculation = useRef(
-    throttle(async (ambulanceLoc: typeof ambulanceLocation, hospitalCoords: Hospital['coordinates']) => {
-      try {
-        const route = await calculateRoute(ambulanceLoc, hospitalCoords);
-        const positions: Array<[number, number]> = route.coordinates.map(
-          coord => [coord[1], coord[0]]
-        );
-        setRouteCoordinates(positions);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.warn('Route calculation failed:', errorMessage);
-        setRouteCoordinates([]);
-      }
-    }, RATE_LIMITS.routeCalculation.minInterval)
-  ).current;
-
-  const handleSelectHospital = useCallback((hospital: Hospital) => {
-    setSelectedHospital(hospital);
-    throttledRouteCalculation(ambulanceLocation, hospital.coordinates);
-  }, [ambulanceLocation, throttledRouteCalculation]);
 
   return (
     <div
@@ -109,43 +77,9 @@ const AmbulanceDashboard = () => {
                 Close
               </Button>
             </div>
-            <PatientForm 
-              triageLevel={selectedTriage} 
-              onClose={() => setSelectedTriage(null)}
-              ambulanceLocation={ambulanceLocation}
-              selectedHospital={selectedHospital}
-            />
+            <PatientForm triageLevel={selectedTriage} onClose={() => setSelectedTriage(null)} />
           </Card>
         )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-          <Card className="p-6 bg-ambulance-card border-ambulance-border animate-fade-in">
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-primary" />
-              <h3 className="text-xl font-bold text-ambulance-text">Route Navigation</h3>
-            </div>
-            <SimpleMap
-              ambulancePosition={[ambulanceLocation.lat, ambulanceLocation.lng]}
-              hospitals={hospitals.map(h => ({
-                id: h.id,
-                name: h.name,
-                position: [h.coordinates.lat, h.coordinates.lng] as [number, number],
-                canAccept: h.canAccept,
-              }))}
-              selectedHospitalId={selectedHospital?.id}
-              route={routeCoordinates}
-            />
-          </Card>
-
-          <Card className="p-6 bg-ambulance-card border-ambulance-border animate-fade-in">
-            <HospitalSelector
-              hospitals={hospitals}
-              ambulanceLocation={ambulanceLocation}
-              onSelectHospital={handleSelectHospital}
-              selectedHospitalId={selectedHospital?.id}
-            />
-          </Card>
-        </div>
       </div>
     </div>
   );
