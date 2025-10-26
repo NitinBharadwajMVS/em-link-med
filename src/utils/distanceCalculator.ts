@@ -23,77 +23,26 @@ export const calculateDistance = (
 
 // Mock ETA calculation based on distance
 export const calculateETA = (distance: number): number => {
-  // Assume average speed of 30 km/h in Bangalore traffic
-  const hours = distance / 30;
+  if (!distance || isNaN(distance)) return 0;
+  // Assume average speed of 40 km/h in Bangalore traffic
+  const hours = distance / 40;
   const minutes = Math.ceil(hours * 60);
   return Math.max(3, minutes); // Minimum 3 minutes
 };
 
-// Sort hospitals by distance and availability
-export const sortHospitalsByPreference = (
+// Sort hospitals by distance only
+export const sortHospitalsByDistance = (
   hospitals: Hospital[],
   alertId?: string
 ): Hospital[] => {
   return [...hospitals]
     .filter((h) => !h.unavailableForAlert || h.unavailableForAlert !== alertId)
+    .filter((h) => h.distance != null && !isNaN(h.distance))
     .sort((a, b) => a.distance - b.distance);
 };
 
-// Deterministic fallback recommendation logic with ambulance location
-export const getFallbackRecommendation = (
-  hospitals: Hospital[],
-  ambulanceLocation: { latitude: number; longitude: number },
-  requiredEquipment?: string[],
-  maxRadius: number = 5
-): Hospital[] => {
-  return [...hospitals]
-    .map(hospital => {
-      // Recalculate distance from ambulance location
-      const actualDistance = calculateDistance(
-        ambulanceLocation.latitude,
-        ambulanceLocation.longitude,
-        hospital.latitude,
-        hospital.longitude
-      );
-      
-      const equipmentMatch = hasRequiredEquipment(hospital, requiredEquipment);
-      const equipmentScore = equipmentMatch.hasAll ? 100 : 
-        Math.max(0, 100 - (equipmentMatch.missing.length * 20));
-      
-      // Distance score (closer is better, max 50 points)
-      const distanceScore = Math.max(0, 50 - actualDistance * 2);
-      
-      // Penalize hospitals beyond maxRadius unless they're the only equipment match
-      const radiusPenalty = actualDistance > maxRadius && !equipmentMatch.hasAll ? 0.5 : 1;
-      
-      const totalScore = (equipmentScore * 0.7 + distanceScore * 0.3) * radiusPenalty;
-      
-      return {
-        ...hospital,
-        distance: actualDistance,
-        score: Math.round(totalScore),
-      };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-};
-
-// Check if hospital has required equipment
-export const hasRequiredEquipment = (
-  hospital: Hospital,
-  requiredEquipment?: string[]
-): { hasAll: boolean; missing: string[] } => {
-  if (!requiredEquipment || requiredEquipment.length === 0) {
-    return { hasAll: true, missing: [] };
-  }
-  
-  const hospitalEquipment = hospital.equipment || [];
-  const missing = requiredEquipment.filter(
-    (eq) => !hospitalEquipment.includes(eq)
-  );
-  
-  return {
-    hasAll: missing.length === 0,
-    missing,
-  };
+// Extract locality from full address (first part before comma)
+export const getLocality = (address: string): string => {
+  const parts = address.split(',');
+  return parts[0]?.trim() || address;
 };

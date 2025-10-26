@@ -19,7 +19,6 @@ import { cn } from '@/lib/utils';
 import { Activity, Clock, User, Phone, ChevronDown, ChevronUp, Check, XCircle, AlertTriangle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
-import { hasRequiredEquipment } from '@/utils/distanceCalculator';
 
 interface AlertCardProps {
   alert: Alert;
@@ -33,9 +32,6 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
   const { patient } = alert;
 
   const hospital = hospitals.find(h => h.id === alert.hospitalId);
-  const equipmentCheck = alert.requiredEquipment 
-    ? hasRequiredEquipment(hospital || { id: '', name: '', distance: 0, address: '', latitude: 0, longitude: 0 }, alert.requiredEquipment)
-    : { hasAll: true, missing: [] };
 
   const triageColors = {
     critical: 'bg-critical/20 border-critical text-critical',
@@ -116,20 +112,13 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
             {alert.requiredEquipment.map((eq) => (
               <Badge
                 key={eq}
-                variant={equipmentCheck.missing.includes(eq) ? 'destructive' : 'secondary'}
+                variant="secondary"
                 className="text-xs"
               >
                 {eq}
-                {equipmentCheck.missing.includes(eq) && ' ⚠️'}
               </Badge>
             ))}
           </div>
-          {!equipmentCheck.hasAll && (
-            <div className="mt-2 text-sm text-critical font-semibold flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Missing equipment: {equipmentCheck.missing.join(', ')}
-            </div>
-          )}
         </div>
       )}
 

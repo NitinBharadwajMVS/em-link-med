@@ -208,7 +208,6 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
         hospitals={hospitals}
         selectedHospitalId={selectedHospitalId}
         onSelect={(hospital) => setSelectedHospitalId(hospital.id)}
-        requiredEquipment={requiredEquipment}
       />
 
       <LiveVitalsDisplay
