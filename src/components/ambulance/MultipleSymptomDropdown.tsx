@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
+import { Check, ChevronsUpDown, Search, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,8 +27,6 @@ interface MultipleSymptomDropdownProps {
 export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDropdownProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [showOtherInput, setShowOtherInput] = useState(false);
-  const [otherText, setOtherText] = useState('');
 
   const selectedConditions = useMemo(() => {
     return values.map(value => {
@@ -56,28 +54,38 @@ export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDro
   }, [search]);
 
   const handleSelect = (conditionValue: string) => {
-    if (conditionValue === 'other') {
-      setShowOtherInput(true);
-      setOpen(false);
-    } else {
-      const newValues = values.includes(conditionValue)
-        ? values.filter(v => v !== conditionValue)
-        : [...values, conditionValue];
-      onChange(newValues);
-    }
+    const newValues = values.includes(conditionValue)
+      ? values.filter(v => v !== conditionValue)
+      : [...values, conditionValue];
+    onChange(newValues);
   };
 
   const handleRemove = (valueToRemove: string) => {
     onChange(values.filter(v => v !== valueToRemove));
   };
 
-  const handleOtherSubmit = () => {
-    if (otherText.trim()) {
-      onChange([...values, otherText.trim()]);
-      setShowOtherInput(false);
-      setOtherText('');
+  const handleAddCustom = () => {
+    const trimmedSearch = search.trim();
+    if (trimmedSearch && !values.includes(trimmedSearch)) {
+      onChange([...values, trimmedSearch]);
+      setSearch('');
     }
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && search.trim()) {
+      e.preventDefault();
+      handleAddCustom();
+    }
+  };
+
+  const hasExactMatch = useMemo(() => {
+    if (!search) return true;
+    const searchLower = search.toLowerCase().trim();
+    return medicalConditions.some(cat =>
+      cat.conditions.some(c => c.label.toLowerCase() === searchLower)
+    );
+  }, [search]);
 
   return (
     <div className="space-y-2">
@@ -117,14 +125,31 @@ export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDro
             <div className="flex items-center border-b border-ambulance-border px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-white" />
               <input
-                placeholder="Search symptoms or conditions..."
+                placeholder="Search or type custom symptom (Press Enter to add)..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="flex h-11 w-full bg-transparent py-3 text-sm outline-none text-white placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
               />
+              {search.trim() && !hasExactMatch && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleAddCustom}
+                  className="ml-2 h-8 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              )}
             </div>
             <CommandList className="max-h-[400px] overflow-y-auto">
-              <CommandEmpty className="text-white">No condition found.</CommandEmpty>
+              {search.trim() && !hasExactMatch && (
+                <div className="px-2 py-3 text-sm text-muted-foreground border-b border-ambulance-border">
+                  Press <kbd className="px-2 py-1 text-xs bg-ambulance-border rounded">Enter</kbd> or click "Add" to add custom symptom: <span className="text-white font-medium">"{search}"</span>
+                </div>
+              )}
+              <CommandEmpty className="text-white">No condition found in list. Type and press Enter to add custom.</CommandEmpty>
               {filteredCategories.map((category) => (
                 <CommandGroup
                   key={category.category}
@@ -158,25 +183,6 @@ export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDro
           </Command>
         </PopoverContent>
       </Popover>
-
-      {showOtherInput && (
-        <div className="space-y-2 animate-fade-in p-3 glass-effect rounded-lg">
-          <Label className="text-sm">Specify other condition</Label>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter condition details..."
-              className="bg-ambulance-card border-ambulance-border text-white"
-              value={otherText}
-              onChange={(e) => setOtherText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleOtherSubmit()}
-              autoFocus
-            />
-            <Button onClick={handleOtherSubmit} size="sm">
-              Add
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
