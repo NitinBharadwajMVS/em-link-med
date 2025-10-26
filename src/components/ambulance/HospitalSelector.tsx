@@ -128,15 +128,10 @@ export const HospitalSelector = ({
   };
 
   const handleSelect = (hospital: Hospital) => {
-    setSelectedForConfirm(hospital);
-  };
-
-  const handleConfirm = () => {
-    if (selectedForConfirm) {
-      onSelect(selectedForConfirm);
-      setIsOpen(false);
-      setSelectedForConfirm(null);
-    }
+    onSelect(hospital);
+    setIsOpen(false);
+    setSelectedForConfirm(null);
+    toast.success(`✅ Selected: ${hospital.name}`);
   };
 
   const renderHospitalCard = (hospital: Hospital) => {
@@ -150,7 +145,7 @@ export const HospitalSelector = ({
       <Card
         key={hospital.id}
         className={cn(
-          "p-4 transition-all border shadow-sm",
+          "p-4 transition-all border shadow-sm pointer-events-auto cursor-default",
           isSelected && "ring-2 ring-primary bg-primary/5 border-primary",
           isUnavailable ? "opacity-50" : "hover:border-primary/50"
         )}
@@ -204,7 +199,7 @@ export const HospitalSelector = ({
           <Button
             size="sm"
             variant={isSelected ? "default" : "outline"}
-            className="w-full"
+            className="w-full min-h-[44px] touch-manipulation"
             onClick={(e) => {
               e.stopPropagation();
               handleSelect(hospital);
@@ -255,7 +250,7 @@ export const HospitalSelector = ({
                 </div>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 pointer-events-auto z-50">
               <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-b from-background to-muted/20">
                 <DialogTitle className="text-xl">
                   Select Hospital
@@ -381,12 +376,9 @@ export const HospitalSelector = ({
                 </div>
               </ScrollArea>
 
-              <div className="p-6 pt-4 border-t flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleConfirm} disabled={!selectedForConfirm}>
-                  Confirm Selection
+              <div className="p-6 pt-4 border-t flex justify-end">
+                <Button variant="outline" onClick={() => setIsOpen(false)} className="min-h-[44px]">
+                  Close
                 </Button>
               </div>
             </DialogContent>
