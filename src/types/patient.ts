@@ -40,7 +40,8 @@ export interface Alert {
   patient: Patient;
   ambulanceId: string;
   eta: number;
-  status: 'pending' | 'acknowledged' | 'accepted';
+  status: 'pending' | 'acknowledged' | 'accepted' | 'completed';
   hospitalId: string;
   timestamp: string;
+  completedAt?: string;
 }

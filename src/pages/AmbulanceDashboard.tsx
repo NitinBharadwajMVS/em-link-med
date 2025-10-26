@@ -5,17 +5,32 @@ import { TriageLevel } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Ambulance } from 'lucide-react';
+import { LogOut, Ambulance, CheckCircle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
-  const { logout } = useApp();
+  const { logout, alerts, completeCase, currentUser } = useApp();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const activeAlerts = alerts.filter(
+    alert => alert.ambulanceId === currentUser && alert.status !== 'completed'
+  );
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handlePatientDropped = (alertId: string) => {
+    completeCase(alertId);
+    toast({
+      title: "Patient Dropped Successfully",
+      description: "Case marked as completed.",
+    });
   };
 
   return (
@@ -79,6 +94,50 @@ const AmbulanceDashboard = () => {
             </div>
             <PatientForm triageLevel={selectedTriage} onClose={() => setSelectedTriage(null)} />
           </Card>
+        )}
+
+        {activeAlerts.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-ambulance-text mb-4">Active Pre-Alerts</h2>
+            <div className="space-y-4">
+              {activeAlerts.map((alert) => (
+                <Card key={alert.id} className="p-6 bg-ambulance-card border-ambulance-border text-ambulance-text">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-xl font-bold">{alert.patient.name}</h3>
+                        <Badge className={`${
+                          alert.patient.triageLevel === 'critical' ? 'bg-critical' :
+                          alert.patient.triageLevel === 'urgent' ? 'bg-urgent' : 'bg-stable'
+                        } text-white`}>
+                          {alert.patient.triageLevel.toUpperCase()}
+                        </Badge>
+                        <Badge variant="outline" className="border-ambulance-border">
+                          {alert.status === 'pending' ? '⏳ Pending' :
+                           alert.status === 'acknowledged' ? '👁️ Acknowledged' : '✅ Accepted'}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                        <div>Age: {alert.patient.age} • {alert.patient.gender}</div>
+                        <div>Contact: {alert.patient.contact}</div>
+                        <div>Complaint: {alert.patient.complaint}</div>
+                        <div>ETA: {alert.eta} min</div>
+                      </div>
+                    </div>
+                    {alert.status === 'accepted' && (
+                      <Button
+                        onClick={() => handlePatientDropped(alert.id)}
+                        className="bg-stable hover:bg-stable/90 text-white"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Patient Dropped
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

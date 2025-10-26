@@ -9,6 +9,7 @@ interface AppContextType {
   addPatient: (patient: Patient) => void;
   sendAlert: (patient: Patient, ambulanceId: string) => Hospital;
   updateAlertStatus: (alertId: string, status: 'acknowledged' | 'accepted') => void;
+  completeCase: (alertId: string) => void;
   login: (userId: string) => void;
   logout: () => void;
 }
@@ -81,6 +82,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const completeCase = (alertId: string) => {
+    setAlerts((prev) =>
+      prev.map((alert) => 
+        alert.id === alertId 
+          ? { ...alert, status: 'completed' as const, completedAt: new Date().toISOString() } 
+          : alert
+      )
+    );
+  };
+
   const login = (userId: string) => {
     setCurrentUser(userId);
   };
@@ -99,6 +110,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         addPatient,
         sendAlert,
         updateAlertStatus,
+        completeCase,
         login,
         logout,
       }}
