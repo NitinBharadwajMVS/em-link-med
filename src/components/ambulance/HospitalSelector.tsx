@@ -251,7 +251,7 @@ export const HospitalSelector = ({
             }
           }}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full border-ambulance-border hover:bg-ambulance-card">
+              <Button variant="outline" className="w-full border-ambulance-border">
                 {selectedHospital ? 'Change Hospital' : 'Select Hospital'}
               </Button>
             </DialogTrigger>
