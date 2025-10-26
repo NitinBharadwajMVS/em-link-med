@@ -44,7 +44,7 @@ const Index = () => {
           </Card>
 
           <Card className="p-8 glass-effect hover:scale-105 transition-transform cursor-pointer"
-            onClick={() => navigate('/hospital')}
+            onClick={() => navigate('/hospital-login')}
           >
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-stable/20 flex items-center justify-center mb-4 glow-stable">

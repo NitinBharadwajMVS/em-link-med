@@ -73,7 +73,7 @@ const AmbulanceLogin = () => {
 
         <div className="mt-6 text-center">
           <button
-            onClick={() => navigate('/hospital')}
+            onClick={() => navigate('/hospital-login')}
             className="text-sm text-primary hover:underline"
           >
             Hospital Staff? Click here
