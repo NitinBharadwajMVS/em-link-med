@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { AlertCard } from '@/components/hospital/AlertCard';
+import { PatientHistoryDialog } from '@/components/history/PatientHistoryDialog';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Building2, AlertTriangle, Activity, CheckCircle } from 'lucide-react';
@@ -28,14 +29,21 @@ const HospitalDashboard = () => {
   return (
     <div className="min-h-screen bg-hospital-bg p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-            <Building2 className="w-7 h-7 text-primary" />
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <Building2 className="w-7 h-7 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Hospital Emergency Center</h1>
+              <p className="text-muted-foreground">Real-time Ambulance Pre-Alerts</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Hospital Emergency Center</h1>
-            <p className="text-muted-foreground">Real-time Ambulance Pre-Alerts</p>
-          </div>
+          <PatientHistoryDialog 
+            alerts={alerts} 
+            title="Patient Case History" 
+            variant="hospital"
+          />
         </div>
 
         <div className="grid grid-cols-3 gap-6 mb-8">

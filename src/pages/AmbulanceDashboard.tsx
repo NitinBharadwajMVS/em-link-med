@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TriageButton } from '@/components/ambulance/TriageButton';
 import { PatientForm } from '@/components/ambulance/PatientForm';
+import { PatientHistoryDialog } from '@/components/history/PatientHistoryDialog';
 import { TriageLevel } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,14 +53,21 @@ const AmbulanceDashboard = () => {
               <p className="text-muted-foreground">Smart Ambulance Interface</p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            className="border-ambulance-border hover:bg-ambulance-card"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-3">
+            <PatientHistoryDialog 
+              alerts={alerts} 
+              title="Patient History" 
+              variant="ambulance"
+            />
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="border-ambulance-border hover:bg-ambulance-card"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-6 mb-8">
