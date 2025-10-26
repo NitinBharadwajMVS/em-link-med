@@ -81,19 +81,19 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-slide-in">
       <div className="flex gap-4">
         <Button
           variant={isNewPatient ? 'default' : 'outline'}
           onClick={() => setIsNewPatient(true)}
-          className="flex-1"
+          className="flex-1 transition-all duration-300 hover:scale-105"
         >
           Add New Patient
         </Button>
         <Button
           variant={!isNewPatient ? 'default' : 'outline'}
           onClick={() => setIsNewPatient(false)}
-          className="flex-1"
+          className="flex-1 transition-all duration-300 hover:scale-105"
         >
           Existing Patient
         </Button>
@@ -115,7 +115,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             </SelectContent>
           </Select>
           {selectedPatient && (
-            <div className="mt-4 p-4 glass-effect rounded-lg space-y-2 text-sm">
+            <div className="mt-4 p-4 glass-effect rounded-lg space-y-2 text-sm animate-slide-in interactive-card">
               <div><strong>Medical History:</strong> {selectedPatient.medicalHistory?.join(', ') || 'None'}</div>
               {selectedPatient.previousVisits && (
                 <div>
@@ -128,11 +128,11 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
       )}
 
       {isNewPatient && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 animate-slide-in">
           <div>
             <Label>Name</Label>
             <Input
-              className="bg-ambulance-card border-ambulance-border"
+              className="bg-ambulance-card border-ambulance-border interactive-input"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
@@ -141,7 +141,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             <Label>Age</Label>
             <Input
               type="number"
-              className="bg-ambulance-card border-ambulance-border"
+              className="bg-ambulance-card border-ambulance-border interactive-input"
               value={formData.age}
               onChange={(e) => setFormData({ ...formData, age: e.target.value })}
             />
@@ -149,7 +149,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
           <div>
             <Label>Gender</Label>
             <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
-              <SelectTrigger className="bg-ambulance-card border-ambulance-border">
+              <SelectTrigger className="bg-ambulance-card border-ambulance-border interactive-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +162,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
           <div>
             <Label>Contact</Label>
             <Input
-              className="bg-ambulance-card border-ambulance-border"
+              className="bg-ambulance-card border-ambulance-border interactive-input"
               value={formData.contact}
               onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
             />
@@ -191,13 +191,13 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
           <div className="flex gap-2">
             <Input
               type="number"
-              className="bg-ambulance-card border-ambulance-border"
+              className="bg-ambulance-card border-ambulance-border interactive-input"
               value={vitals.bloodPressureSys}
               onChange={(e) => setVitals({ ...vitals, bloodPressureSys: parseInt(e.target.value) })}
             />
             <Input
               type="number"
-              className="bg-ambulance-card border-ambulance-border"
+              className="bg-ambulance-card border-ambulance-border interactive-input"
               value={vitals.bloodPressureDia}
               onChange={(e) => setVitals({ ...vitals, bloodPressureDia: parseInt(e.target.value) })}
             />
@@ -208,7 +208,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
           <Input
             type="number"
             step="0.1"
-            className="bg-ambulance-card border-ambulance-border"
+            className="bg-ambulance-card border-ambulance-border interactive-input"
             value={vitals.temperature}
             onChange={(e) => setVitals({ ...vitals, temperature: parseFloat(e.target.value) })}
           />
@@ -219,7 +219,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             type="number"
             min="3"
             max="15"
-            className="bg-ambulance-card border-ambulance-border"
+            className="bg-ambulance-card border-ambulance-border interactive-input"
             value={vitals.gcs}
             onChange={(e) => setVitals({ ...vitals, gcs: parseInt(e.target.value) })}
           />
@@ -228,10 +228,11 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
 
       <Button
         onClick={handleSendAlert}
-        className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 glow-critical"
+        className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 glow-critical group relative overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95"
       >
-        <Send className="w-5 h-5 mr-2" />
-        Send Pre-Alert
+        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+        <Send className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
+        <span className="relative">Send Pre-Alert</span>
       </Button>
     </div>
   );

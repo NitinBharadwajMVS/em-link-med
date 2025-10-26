@@ -42,14 +42,25 @@ export const TriageButton = ({ level, onClick, isActive }: TriageButtonProps) =>
         'flex-1 min-w-[200px] h-32 rounded-2xl transition-all duration-300',
         'flex flex-col items-center justify-center gap-3',
         'text-white font-bold text-xl tracking-wider',
+        'relative overflow-hidden group',
         bgClass,
         isActive && glowClass,
         isActive && activeClass,
-        'hover:scale-105 hover:shadow-2xl'
+        'hover:scale-105 hover:shadow-2xl',
+        'before:absolute before:inset-0 before:bg-white/0 before:transition-all before:duration-300',
+        'hover:before:bg-white/10',
+        'active:scale-95'
       )}
     >
-      <Icon className="w-12 h-12" />
-      <span>{label}</span>
+      <Icon className={cn(
+        "w-12 h-12 transition-all duration-300",
+        "group-hover:scale-110 group-hover:rotate-6",
+        isActive && "animate-bounce-subtle"
+      )} />
+      <span className="group-hover:tracking-widest transition-all duration-300">{label}</span>
+      {isActive && (
+        <div className="absolute inset-0 border-2 border-white/30 rounded-2xl animate-ping" />
+      )}
     </button>
   );
 };

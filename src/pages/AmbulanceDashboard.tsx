@@ -66,13 +66,13 @@ const AmbulanceDashboard = () => {
         </div>
 
         {selectedTriage && (
-          <Card className="p-8 bg-ambulance-card border-ambulance-border text-ambulance-text">
+          <Card className="p-8 bg-ambulance-card border-ambulance-border text-ambulance-text animate-slide-in interactive-card">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold capitalize">{selectedTriage} Patient Entry</h2>
               <Button
                 variant="ghost"
                 onClick={() => setSelectedTriage(null)}
-                className="text-muted-foreground hover:text-ambulance-text"
+                className="text-muted-foreground hover:text-ambulance-text transition-all duration-300 hover:scale-110"
               >
                 Close
               </Button>
