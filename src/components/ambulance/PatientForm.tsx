@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LiveVitalsDisplay } from './LiveVitalsDisplay';
-import { SymptomDropdown } from './SymptomDropdown';
+import { MultipleSymptomDropdown } from './MultipleSymptomDropdown';
 import { useApp } from '@/contexts/AppContext';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,8 +24,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
     age: '',
     gender: 'male',
     contact: '',
-    complaint: '',
-    complaintCategory: '',
+    complaints: [] as string[],
   });
   const [vitals, setVitals] = useState<Vitals>({
     spo2: 98,
@@ -42,7 +41,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
     let patientData: Patient;
 
     if (isNewPatient) {
-      if (!formData.name || !formData.age || !formData.complaint) {
+      if (!formData.name || !formData.age || formData.complaints.length === 0) {
         toast.error('Please fill all required fields');
         return;
       }
@@ -54,7 +53,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
         gender: formData.gender as 'male' | 'female' | 'other',
         contact: formData.contact,
         vitals,
-        complaint: formData.complaint,
+        complaint: formData.complaints.join(', '),
         triageLevel,
         timestamp: new Date().toISOString(),
       };
@@ -168,11 +167,11 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             />
           </div>
           <div className="col-span-2">
-            <Label>Chief Complaint / Condition</Label>
-            <SymptomDropdown
-              value={formData.complaint}
-              onChange={(value, category) => 
-                setFormData({ ...formData, complaint: value, complaintCategory: category || '' })
+            <Label>Chief Complaints / Conditions (Multiple Selection)</Label>
+            <MultipleSymptomDropdown
+              values={formData.complaints}
+              onChange={(values) => 
+                setFormData({ ...formData, complaints: values })
               }
             />
           </div>

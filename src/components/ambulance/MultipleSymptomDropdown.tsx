@@ -1,0 +1,182 @@
+import { useState, useMemo } from 'react';
+import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { medicalConditions } from '@/data/medicalConditions';
+
+interface MultipleSymptomDropdownProps {
+  values: string[];
+  onChange: (values: string[]) => void;
+}
+
+export const MultipleSymptomDropdown = ({ values, onChange }: MultipleSymptomDropdownProps) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [showOtherInput, setShowOtherInput] = useState(false);
+  const [otherText, setOtherText] = useState('');
+
+  const selectedConditions = useMemo(() => {
+    return values.map(value => {
+      for (const cat of medicalConditions) {
+        const found = cat.conditions.find(c => c.value === value);
+        if (found) return { value, label: found.label, category: cat.category };
+      }
+      return { value, label: value, category: 'Other' };
+    });
+  }, [values]);
+
+  const filteredCategories = useMemo(() => {
+    if (!search) return medicalConditions;
+    
+    const searchLower = search.toLowerCase();
+    return medicalConditions
+      .map(cat => ({
+        ...cat,
+        conditions: cat.conditions.filter(
+          c => c.label.toLowerCase().includes(searchLower) ||
+               cat.category.toLowerCase().includes(searchLower)
+        ),
+      }))
+      .filter(cat => cat.conditions.length > 0);
+  }, [search]);
+
+  const handleSelect = (conditionValue: string) => {
+    if (conditionValue === 'other') {
+      setShowOtherInput(true);
+      setOpen(false);
+    } else {
+      const newValues = values.includes(conditionValue)
+        ? values.filter(v => v !== conditionValue)
+        : [...values, conditionValue];
+      onChange(newValues);
+    }
+  };
+
+  const handleRemove = (valueToRemove: string) => {
+    onChange(values.filter(v => v !== valueToRemove));
+  };
+
+  const handleOtherSubmit = () => {
+    if (otherText.trim()) {
+      onChange([...values, otherText.trim()]);
+      setShowOtherInput(false);
+      setOtherText('');
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between bg-ambulance-card border-ambulance-border text-ambulance-text hover:bg-ambulance-card/80 min-h-[2.5rem] h-auto"
+          >
+            <div className="flex flex-wrap gap-1 flex-1">
+              {selectedConditions.length > 0 ? (
+                selectedConditions.map((condition) => (
+                  <Badge
+                    key={condition.value}
+                    variant="secondary"
+                    className="gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemove(condition.value);
+                    }}
+                  >
+                    {condition.label}
+                    <X className="h-3 w-3" />
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-muted-foreground">Select conditions or symptoms...</span>
+              )}
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[500px] p-0 bg-ambulance-card border-ambulance-border z-50" align="start">
+          <Command className="bg-ambulance-card">
+            <div className="flex items-center border-b border-ambulance-border px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-white" />
+              <input
+                placeholder="Search symptoms or conditions..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex h-11 w-full bg-transparent py-3 text-sm outline-none text-white placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            <CommandList className="max-h-[400px] overflow-y-auto">
+              <CommandEmpty className="text-white">No condition found.</CommandEmpty>
+              {filteredCategories.map((category) => (
+                <CommandGroup
+                  key={category.category}
+                  heading={category.category}
+                  className="text-ambulance-text"
+                >
+                  {category.conditions
+                    .sort((a, b) => (b.common ? 1 : 0) - (a.common ? 1 : 0))
+                    .map((condition) => (
+                      <CommandItem
+                        key={condition.value}
+                        value={condition.value}
+                        onSelect={() => handleSelect(condition.value)}
+                        className="cursor-pointer hover:bg-ambulance-border text-white"
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            values.includes(condition.value) ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        <span className="flex-1">{condition.label}</span>
+                        {condition.common && (
+                          <span className="text-xs text-primary">Common</span>
+                        )}
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              ))}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {showOtherInput && (
+        <div className="space-y-2 animate-fade-in p-3 glass-effect rounded-lg">
+          <Label className="text-sm">Specify other condition</Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter condition details..."
+              className="bg-ambulance-card border-ambulance-border text-white"
+              value={otherText}
+              onChange={(e) => setOtherText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleOtherSubmit()}
+              autoFocus
+            />
+            <Button onClick={handleOtherSubmit} size="sm">
+              Add
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
