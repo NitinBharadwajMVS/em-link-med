@@ -39,6 +39,7 @@ export interface Hospital {
   unavailableForAlert?: string; // alertId if hospital is unavailable for this specific alert
   latitude: number;
   longitude: number;
+  eta?: number; // Estimated time of arrival in minutes
 }
 
 export interface AuditLog {

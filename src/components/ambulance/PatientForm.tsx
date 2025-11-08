@@ -259,7 +259,8 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
 
       <Button
         onClick={handleSendAlert}
-        className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 glow-critical group relative overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95"
+        disabled={!selectedHospitalId}
+        className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 glow-critical group relative overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         <Send className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />

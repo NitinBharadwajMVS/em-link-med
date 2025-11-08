@@ -40,3 +40,35 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Hospital selection panel styles (Ambulance interface only) */
+.hospital-panel {
+  pointer-events: auto !important;
+  z-index: 100 !important;
+}
+
+.hospital-panel [role="dialog"] {
+  pointer-events: auto !important;
+}
+
+.hospital-list-scroll {
+  max-height: 420px;
+}
+
+.hospital-list-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.hospital-list-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 6px;
+}
+
+.hospital-list-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.5);
+  border-radius: 6px;
+}
+
+.hospital-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.7);
+}

@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Hospital } from '@/types/patient';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,9 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Building2, Phone, Navigation, CheckCircle, Clock, Search, Plus, MapPin, Loader2, RefreshCw } from 'lucide-react';
-import { calculateDistance, calculateETA, sortHospitalsByDistance, getLocality } from '@/utils/distanceCalculator';
+import { Building2, Navigation, Clock, Search, Plus, MapPin, Loader2, RefreshCw } from 'lucide-react';
+import { calculateDistance, calculateETA, sortHospitalsByDistance } from '@/utils/distanceCalculator';
 import { AddHospitalDialog } from './AddHospitalDialog';
+import { HospitalRow } from './HospitalRow';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -54,7 +54,7 @@ export const HospitalSelector = ({
   const [usingFallback, setUsingFallback] = useState(false);
   const [etaMethod, setEtaMethod] = useState<'routing' | 'fallback'>('fallback');
 
-  // Recalculate hospital distances based on ambulance location
+  // Recalculate hospital distances and ETAs based on ambulance location
   const hospitalsWithDistances = useMemo(() => {
     if (!ambulanceLocation) return hospitals;
     
@@ -65,9 +65,11 @@ export const HospitalSelector = ({
         hospital.latitude,
         hospital.longitude
       );
+      const eta = calculateETA(distance);
       return {
         ...hospital,
-        distance: isNaN(distance) ? 0 : distance
+        distance: isNaN(distance) ? 0 : distance,
+        eta: isNaN(eta) ? 0 : eta
       };
     });
   }, [hospitals, ambulanceLocation]);
@@ -134,84 +136,6 @@ export const HospitalSelector = ({
     toast.success(`✅ Selected: ${hospital.name}`);
   };
 
-  const renderHospitalCard = (hospital: Hospital) => {
-    const distance = hospital.distance || 0;
-    const eta = calculateETA(distance);
-    const isSelected = hospital.id === (selectedForConfirm?.id || selectedHospitalId);
-    const isUnavailable = hospital.unavailableForAlert === alertId;
-    const locality = getLocality(hospital.address);
-
-    return (
-      <Card
-        key={hospital.id}
-        className={cn(
-          "p-4 transition-all border shadow-sm pointer-events-auto cursor-default",
-          isSelected && "ring-2 ring-primary bg-primary/5 border-primary",
-          isUnavailable ? "opacity-50" : "hover:border-primary/50"
-        )}
-      >
-        <div className="flex items-start gap-3 mb-3">
-          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-6 h-6 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="font-semibold text-base leading-tight line-clamp-2 break-words">
-                {hospital.name}
-              </h3>
-              {isSelected && (
-                <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground line-clamp-1 break-words">
-              {locality}
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-2 mb-3">
-          {hospital.contact && (
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <a 
-                href={`tel:${hospital.contact}`} 
-                className="hover:text-primary truncate"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {hospital.contact}
-              </a>
-            </div>
-          )}
-          
-          <div className="flex gap-2 flex-wrap">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Navigation className="w-3 h-3" />
-              {distance > 0 ? distance.toFixed(2) : '—'} km
-            </Badge>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {eta > 0 ? `${eta} min` : '—'}
-            </Badge>
-          </div>
-        </div>
-
-        {!isUnavailable && (
-          <Button
-            size="sm"
-            variant={isSelected ? "default" : "outline"}
-            className="w-full min-h-[44px] touch-manipulation"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSelect(hospital);
-            }}
-          >
-            {isSelected ? 'Selected' : 'Select'}
-          </Button>
-        )}
-      </Card>
-    );
-  };
-
   return (
     <>
       <AddHospitalDialog 
@@ -240,7 +164,7 @@ export const HospitalSelector = ({
                       <div>
                         <div className="font-semibold">{selectedHospital.name}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {selectedHospital.distance.toFixed(1)} km • ETA: {calculateETA(selectedHospital.distance)} min
+                          {selectedHospital.distance?.toFixed(1) || '—'} km • ETA: {selectedHospital.eta || calculateETA(selectedHospital.distance || 0)} min
                         </div>
                       </div>
                     ) : (
@@ -250,7 +174,7 @@ export const HospitalSelector = ({
                 </div>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 pointer-events-auto z-50">
+            <DialogContent className="hospital-panel max-w-4xl h-[90vh] flex flex-col p-0 z-[100]">
               <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-b from-background to-muted/20">
                 <DialogTitle className="text-xl">
                   Select Hospital
@@ -359,8 +283,8 @@ export const HospitalSelector = ({
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 px-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-4">
+              <ScrollArea className="flex-1 px-6 hospital-list-scroll">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                   {!ambulanceLocation && (
                     <div className="col-span-full text-center py-12 text-muted-foreground">
                       <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -372,7 +296,14 @@ export const HospitalSelector = ({
                       No hospitals found matching your search.
                     </div>
                   )}
-                  {ambulanceLocation && filteredHospitals.map((hospital) => renderHospitalCard(hospital))}
+                  {ambulanceLocation && filteredHospitals.map((hospital) => (
+                    <HospitalRow
+                      key={hospital.id}
+                      hospital={hospital}
+                      isSelected={hospital.id === selectedHospitalId}
+                      onSelect={handleSelect}
+                    />
+                  ))}
                 </div>
               </ScrollArea>
 
@@ -397,11 +328,11 @@ export const HospitalSelector = ({
                   <div className="text-sm text-muted-foreground flex gap-3 mt-1">
                     <span className="flex items-center gap-1">
                       <Navigation className="w-3 h-3" />
-                      {selectedHospital.distance.toFixed(1)} km
+                      {selectedHospital.distance?.toFixed(1) || '—'} km
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {calculateETA(selectedHospital.distance)} min
+                      {selectedHospital.eta || calculateETA(selectedHospital.distance || 0)} min
                     </span>
                   </div>
                 </div>
