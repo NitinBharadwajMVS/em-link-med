@@ -18,7 +18,7 @@ interface PatientFormProps {
 }
 
 export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
-  const { patients, addPatient, sendAlert, currentUser, hospitals } = useApp();
+  const { patients, addPatient, updatePatient, sendAlert, currentUser, hospitals } = useApp();
   const [isNewPatient, setIsNewPatient] = useState(true);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>('');
@@ -42,7 +42,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const handleSendAlert = async () => {
-    let patientData: Patient;
+    let patientId: string;
 
     if (isNewPatient) {
       if (!formData.name || !formData.age || formData.complaints.length === 0) {
@@ -50,7 +50,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
         return;
       }
 
-      patientData = {
+      const patientData: Patient = {
         id: `P${Date.now()}`,
         name: formData.name,
         age: parseInt(formData.age),
@@ -61,13 +61,29 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
         triageLevel,
         timestamp: new Date().toISOString(),
       };
-      addPatient(patientData);
+      
+      try {
+        patientId = await addPatient(patientData);
+      } catch (error) {
+        console.error('Error adding patient:', error);
+        toast.error('Failed to add patient');
+        return;
+      }
     } else {
       if (!selectedPatient) {
         toast.error('Please select a patient');
         return;
       }
-      patientData = { ...selectedPatient, vitals, triageLevel };
+      patientId = selectedPatient.id;
+      
+      // Update existing patient with new vitals and triage
+      try {
+        await updatePatient(patientId, { vitals, triageLevel });
+      } catch (error) {
+        console.error('Error updating patient:', error);
+        toast.error('Failed to update patient');
+        return;
+      }
     }
 
     if (!selectedHospitalId) {
@@ -87,7 +103,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
 
     try {
       const hospital = await sendAlert(
-        patientData,
+        patientId,
         ambulanceId,
         selectedHospitalId,
         distance,
