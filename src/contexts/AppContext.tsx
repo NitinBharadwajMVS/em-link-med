@@ -55,7 +55,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         .from('patients')
         .select('*')
         .eq('ambulance_id', currentAmbulanceId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<Array<{
+          id: string;
+          name: string;
+          age: number;
+          gender: string;
+          contact: string;
+          complaint: string | null;
+          triage_level: string;
+          vitals: any;
+          medical_history: string[] | null;
+          created_at: string | null;
+          ambulance_id: string | null;
+          current_hospital_id: string | null;
+          updated_at: string | null;
+        }>>();
 
       if (error) {
         console.error('Error loading patients:', error);
@@ -86,7 +101,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from('alerts')
         .select('*')
-        .order('timestamp', { ascending: false });
+        .order('timestamp', { ascending: false })
+        .returns<Array<{
+          id: string;
+          patient_id: string | null;
+          patient_name: string;
+          patient_age: number | null;
+          patient_gender: string | null;
+          patient_contact: string | null;
+          patient_complaint: string | null;
+          vitals: any;
+          triage_level: string;
+          ambulance_id: string;
+          hospital_id: string;
+          eta: number | null;
+          status: string;
+          timestamp: string | null;
+          completed_at: string | null;
+          required_equipment: string[] | null;
+          decline_reason: string | null;
+          previous_hospital_ids: string[] | null;
+          audit_log: any;
+        }>>();
 
       if (error) {
         console.error('Error loading alerts:', error);
@@ -189,6 +225,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [currentUser, currentHospitalId]);
 
   const addPatient = async (patient: Patient): Promise<string> => {
+    type PatientInsert = {
+      id?: string;
+      name: string;
+      age: number;
+      gender: string;
+      contact: string;
+      complaint: string | null;
+      triage_level: string;
+      vitals: any;
+      medical_history: string[] | null;
+      current_hospital_id: string | null;
+      ambulance_id: string | null;
+    };
+    
     const { data, error } = await supabase.from('patients').insert({
       name: patient.name,
       age: patient.age,
@@ -200,7 +250,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       medical_history: patient.medicalHistory || [],
       current_hospital_id: null,
       ambulance_id: currentAmbulanceId
-    }).select('id').single();
+    } as PatientInsert).select('id').single<{ id: string }>();
 
     if (error) {
       console.error('Error adding patient:', error);
@@ -217,9 +267,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (updates.vitals) updateData.vitals = updates.vitals;
     if (updates.medicalHistory) updateData.medical_history = updates.medicalHistory;
 
+    type PatientUpdate = {
+      complaint?: string;
+      triage_level?: string;
+      vitals?: any;
+      medical_history?: string[];
+    };
+
     const { error } = await supabase
       .from('patients')
-      .update(updateData)
+      .update(updateData as PatientUpdate)
       .eq('id', patientId);
 
     if (error) {
@@ -241,18 +298,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Hospital not found');
     }
 
+    type PatientUpdate = {
+      current_hospital_id?: string | null;
+    };
+
     // Update patient's current hospital
     await supabase
       .from('patients')
-      .update({ current_hospital_id: hospitalId })
+      .update({ current_hospital_id: hospitalId } as PatientUpdate)
       .eq('id', patientId);
+
+    type PatientRow = {
+      id: string;
+      name: string;
+      age: number;
+      gender: string;
+      contact: string;
+      complaint: string | null;
+      triage_level: string;
+      vitals: any;
+      medical_history: string[] | null;
+      current_hospital_id: string | null;
+      ambulance_id: string | null;
+      created_at: string | null;
+      updated_at: string | null;
+    };
 
     // Get patient data for alert
     const { data: patientData } = await supabase
       .from('patients')
       .select('*')
       .eq('id', patientId)
-      .single();
+      .single<PatientRow>();
 
     const alertId = `A${Date.now()}`;
     const auditLog = [
@@ -310,13 +387,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const updatedAuditLog = [...alert.auditLog, newLog];
 
+    type AlertUpdate = {
+      status?: string;
+      decline_reason?: string | null;
+      audit_log?: any;
+    };
+
     const { error } = await supabase
       .from('alerts')
       .update({
         status,
         decline_reason: status === 'declined' ? declineReason : null,
         audit_log: updatedAuditLog as any
-      })
+      } as AlertUpdate)
       .eq('id', alertId);
 
     if (error) {
@@ -338,13 +421,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const updatedAuditLog = [...alert.auditLog, newLog];
 
+    type AlertUpdate = {
+      status?: string;
+      completed_at?: string | null;
+      audit_log?: any;
+    };
+
     const { error } = await supabase
       .from('alerts')
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
         audit_log: updatedAuditLog as any
-      })
+      } as AlertUpdate)
       .eq('id', alertId);
 
     if (error) {
@@ -371,6 +460,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       const updatedAuditLog = [...existingAlert.auditLog, newLog];
 
+      type AlertUpdate = {
+        status?: string;
+        decline_reason?: string | null;
+        audit_log?: any;
+        completed_at?: string | null;
+      };
+
       await supabase
         .from('alerts')
         .update({
@@ -378,13 +474,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           decline_reason: `Hospital changed: ${reason}`,
           audit_log: updatedAuditLog as any,
           completed_at: new Date().toISOString()
-        })
+        } as AlertUpdate)
         .eq('id', existingAlert.id);
+
+      type PatientUpdate = {
+        current_hospital_id?: string | null;
+      };
 
       // Update patient's current hospital
       await supabase
         .from('patients')
-        .update({ current_hospital_id: newHospitalId })
+        .update({ current_hospital_id: newHospitalId } as PatientUpdate)
         .eq('id', patientId);
 
       // Create new alert at the new hospital
@@ -416,11 +516,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const updatedAuditLog = [...alert.auditLog, newLog];
 
+    type AlertUpdate = {
+      audit_log?: any;
+    };
+
     const { error } = await supabase
       .from('alerts')
       .update({
         audit_log: updatedAuditLog as any
-      })
+      } as AlertUpdate)
       .eq('id', alertId);
 
     if (error) {

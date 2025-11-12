@@ -27,7 +27,7 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
         .from('ambulances')
         .select('device_id')
         .eq('id', currentAmbulanceId)
-        .single();
+        .single<{ device_id: string | null }>();
 
       if (error || !data?.device_id) {
         console.log('No device linked, using simulated data');
@@ -51,7 +51,7 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
         .from('live_vitals')
         .select('*')
         .eq('device_id', deviceId)
-        .single();
+        .single<{ spo2_pct: number | null; hr_bpm: number | null }>();
 
       if (!error && data) {
         const newSpo2 = data.spo2_pct || 98;
