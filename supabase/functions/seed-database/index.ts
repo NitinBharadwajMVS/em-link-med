@@ -3,42 +3,43 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.1';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Helper function to generate short name from hospital name
-function generateShortname(hospitalName: string): string {
+// Helper function to generate username from hospital name (first significant word)
+function generateUsername(hospitalName: string): string {
   const specialCases: Record<string, string> = {
-    'Fortis': 'Fortis',
-    'Apollo': 'Apollo',
-    'Manipal': 'Manipal',
-    'Columbia Asia': 'Columbia',
-    'Narayana': 'Narayana',
-    'Sakra': 'Sakra',
-    'St. John': 'StJohns',
-    'BGS': 'BGS',
-    'Aster': 'Aster',
-    'Cloudnine': 'Cloudnine',
-    'Sparsh': 'Sparsh',
-    'Vikram': 'Vikram',
-    'Motherhood': 'Motherhood',
-    'HCG': 'HCG',
-    'Ramaiah': 'Ramaiah',
-    'Sagar': 'Sagar',
-    'Baptist': 'Baptist',
-    'KIMS': 'KIMS',
-    'Rangadore': 'Rangadore',
-    'Kauvery': 'Kauvery',
-    'Rainbow': 'Rainbow',
-    'Brindavan': 'Brindavan',
+    'Fortis': 'fortis',
+    'Apollo': 'apollo',
+    'Manipal': 'manipal',
+    'Columbia Asia': 'columbia',
+    'Narayana': 'narayana',
+    'Sakra': 'sakra',
+    'St. John': 'stjohn',
+    'BGS': 'bgs',
+    'Aster': 'aster',
+    'Cloudnine': 'cloudnine',
+    'Sparsh': 'sparsh',
+    'Vikram': 'vikram',
+    'Motherhood': 'motherhood',
+    'HCG': 'hcg',
+    'Ramaiah': 'ramaiah',
+    'Sagar': 'sagar',
+    'Baptist': 'baptist',
+    'KIMS': 'kims',
+    'Rangadore': 'rangadore',
+    'Kauvery': 'kauvery',
+    'Rainbow': 'rainbow',
+    'Brindavan': 'brindavan',
   };
 
   for (const [key, value] of Object.entries(specialCases)) {
     if (hospitalName.includes(key)) return value;
   }
 
+  // Get first significant word (not common words)
   const words = hospitalName.split(' ').filter(w => 
     !['Hospital', 'Hospitals', 'Medical', 'Centre', 'Center', 'Road', 'Layout'].includes(w)
   );
   
-  return words.slice(0, Math.min(2, words.length)).join('');
+  return words[0]?.toLowerCase() || hospitalName.split(' ')[0].toLowerCase();
 }
 
 Deno.serve(async (req) => {
@@ -77,10 +78,9 @@ Deno.serve(async (req) => {
 
     // Seed each hospital
     for (const hospital of hospitalsData) {
-      const shortname = generateShortname(hospital.name);
-      const username = shortname.toLowerCase();
+      const username = generateUsername(hospital.name);
       const internalEmail = `${username}@internal.example`;
-      const password = '12345678'; // Standard password for all hospitals
+      const password = username; // Password same as username
 
       try {
         // 1. Create auth user
@@ -145,7 +145,6 @@ Deno.serve(async (req) => {
         credentials.push({
           hospital_id: hospital.id,
           hospital_name: hospital.name,
-          shortname: shortname,
           username: username,
           internal_email: internalEmail,
           password: password,
@@ -189,7 +188,6 @@ Deno.serve(async (req) => {
         credentials.push({
           hospital_id: 'amb-001',
           hospital_name: 'Demo Ambulance',
-          shortname: 'AMB-001',
           username: 'amb1',
           internal_email: 'amb1@internal.example',
           password: '1234',
@@ -224,7 +222,6 @@ Deno.serve(async (req) => {
         credentials.push({
           hospital_id: 'admin',
           hospital_name: 'Admin Account',
-          shortname: 'Admin',
           username: 'hos1',
           internal_email: 'hos1@internal.example',
           password: 'admin123',
