@@ -1,16 +1,100 @@
 import { useEffect, useState } from 'react';
 import { Activity, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useApp } from '@/contexts/AppContext';
 
 interface LiveVitalsProps {
   onVitalsUpdate?: (spo2: number, heartRate: number) => void;
 }
 
 export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
+  const { currentAmbulanceId } = useApp();
   const [spo2, setSpo2] = useState(98);
   const [heartRate, setHeartRate] = useState(72);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
+  const [isSimulated, setIsSimulated] = useState(false);
 
+  // Get device_id for current ambulance
   useEffect(() => {
+    const getDeviceId = async () => {
+      if (!currentAmbulanceId) {
+        setIsSimulated(true);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('ambulances')
+        .select('device_id')
+        .eq('id', currentAmbulanceId)
+        .single();
+
+      if (error || !data?.device_id) {
+        console.log('No device linked, using simulated data');
+        setIsSimulated(true);
+      } else {
+        setDeviceId(data.device_id);
+        setIsSimulated(false);
+      }
+    };
+
+    getDeviceId();
+  }, [currentAmbulanceId]);
+
+  // Subscribe to real-time vitals updates if device is linked
+  useEffect(() => {
+    if (!deviceId || isSimulated) return;
+
+    // Initial fetch
+    const fetchVitals = async () => {
+      const { data, error } = await supabase
+        .from('live_vitals')
+        .select('*')
+        .eq('device_id', deviceId)
+        .single();
+
+      if (!error && data) {
+        const newSpo2 = data.spo2_pct || 98;
+        const newHR = data.hr_bpm || 72;
+        setSpo2(newSpo2);
+        setHeartRate(newHR);
+        onVitalsUpdate?.(newSpo2, newHR);
+      }
+    };
+
+    fetchVitals();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('vitals-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'live_vitals',
+          filter: `device_id=eq.${deviceId}`
+        },
+        (payload) => {
+          const data = payload.new;
+          const newSpo2 = data.spo2_pct || 98;
+          const newHR = data.hr_bpm || 72;
+          setSpo2(newSpo2);
+          setHeartRate(newHR);
+          onVitalsUpdate?.(newSpo2, newHR);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [deviceId, isSimulated, onVitalsUpdate]);
+
+  // Fallback to simulated data if no device
+  useEffect(() => {
+    if (!isSimulated) return;
+
     const interval = setInterval(() => {
       const newSpo2 = Math.floor(Math.random() * 5) + 95;
       const newHR = Math.floor(Math.random() * 20) + 65;
@@ -20,17 +104,28 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [onVitalsUpdate]);
+  }, [isSimulated, onVitalsUpdate]);
 
   return (
     <div className="glass-effect p-6 rounded-xl border border-ambulance-border interactive-card group">
       <div className="flex items-center gap-2 mb-4 text-ambulance-text">
         <Activity className="w-5 h-5 text-primary animate-pulse" />
-        <span className="font-semibold">Live Sensor Data (MAX30102)</span>
+        <span className="font-semibold">
+          {isSimulated ? 'Simulated Sensor Data' : `Live Sensor Data (${deviceId})`}
+        </span>
         <div className="ml-auto flex gap-1">
-          <div className="w-2 h-2 rounded-full bg-stable animate-pulse" />
-          <div className="w-2 h-2 rounded-full bg-stable animate-pulse [animation-delay:0.2s]" />
-          <div className="w-2 h-2 rounded-full bg-stable animate-pulse [animation-delay:0.4s]" />
+          <div className={cn(
+            "w-2 h-2 rounded-full animate-pulse",
+            isSimulated ? "bg-yellow-500" : "bg-stable"
+          )} />
+          <div className={cn(
+            "w-2 h-2 rounded-full animate-pulse [animation-delay:0.2s]",
+            isSimulated ? "bg-yellow-500" : "bg-stable"
+          )} />
+          <div className={cn(
+            "w-2 h-2 rounded-full animate-pulse [animation-delay:0.4s]",
+            isSimulated ? "bg-yellow-500" : "bg-stable"
+          )} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-6">
