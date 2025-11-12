@@ -2,3 +2,6 @@ project_id = "vtcnosxbkzxeojnhidiy"
 
 [functions.recommend-hospital]
 verify_jwt = false
+
+[functions.seed-database]
+verify_jwt = false
