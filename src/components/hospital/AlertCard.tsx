@@ -260,12 +260,14 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-
-            <Button onClick={handleAccept} className="flex-1 bg-stable hover:bg-stable/90">
-              <Check className="w-4 h-4 mr-2" />
-              Accept
-            </Button>
           </>
+        )}
+
+        {(alert.status === 'pending' || alert.status === 'acknowledged') && (
+          <Button onClick={handleAccept} className="flex-1 bg-stable hover:bg-stable/90">
+            <Check className="w-4 h-4 mr-2" />
+            Accept
+          </Button>
         )}
       </div>
     </Card>
