@@ -46,6 +46,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadHospitals();
   }, []);
 
+  // Load patients from Supabase
+  useEffect(() => {
+    const loadPatients = async () => {
+      if (!currentUser || !currentAmbulanceId) return;
+
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('ambulance_id', currentAmbulanceId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading patients:', error);
+      } else if (data) {
+        setPatients(data.map(p => ({
+          id: p.id,
+          name: p.name,
+          age: p.age,
+          gender: p.gender as 'male' | 'female' | 'other',
+          contact: p.contact,
+          complaint: p.complaint || '',
+          triageLevel: p.triage_level as any,
+          vitals: p.vitals as any,
+          medicalHistory: p.medical_history || [],
+          timestamp: p.created_at || new Date().toISOString()
+        })));
+      }
+    };
+
+    loadPatients();
+  }, [currentUser, currentAmbulanceId]);
+
   // Load alerts from Supabase
   useEffect(() => {
     const loadAlerts = async () => {
@@ -62,7 +94,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setAlerts(data.map(alert => ({
           id: alert.id,
           patient: {
-            id: alert.id,
+            id: alert.patient_id || alert.id,
             name: alert.patient_name,
             age: alert.patient_age || 0,
             gender: alert.patient_gender as 'male' | 'female' | 'other',
