@@ -94,7 +94,7 @@ async function seedHospitals() {
     const shortname = generateShortname(hospital.name);
     const username = shortname.toLowerCase();
     const internalEmail = `${username}@internal.example`;
-    const password = `123456789`;
+    const password = `${shortname}@123`;
 
     try {
       console.log(`Processing: ${hospital.name} (${shortname})...`);
