@@ -3,11 +3,12 @@ import { TriageButton } from '@/components/ambulance/TriageButton';
 import { PatientForm } from '@/components/ambulance/PatientForm';
 import { PatientHistoryDialog } from '@/components/history/PatientHistoryDialog';
 import { HospitalSelector } from '@/components/ambulance/HospitalSelector';
+import { MultipleSymptomDropdown } from '@/components/ambulance/MultipleSymptomDropdown';
 import { TriageLevel } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Ambulance, CheckCircle, AlertCircle, Clock, Building2 } from 'lucide-react';
+import { LogOut, Ambulance, CheckCircle, AlertCircle, Clock, Building2, Edit } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +18,9 @@ import { calculateETA } from '@/utils/distanceCalculator';
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
   const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
-  const { logout, alerts, completeCase, currentUser, hospitals, changeHospital, addHospital } = useApp();
+  const [editingSymptomsAlertId, setEditingSymptomsAlertId] = useState<string | null>(null);
+  const [updatedSymptoms, setUpdatedSymptoms] = useState<string[]>([]);
+  const { logout, alerts, completeCase, currentUser, hospitals, changeHospital, addHospital, updatePatient } = useApp();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,6 +52,28 @@ const AmbulanceDashboard = () => {
         description: `Pre-alert resent to ${newHospital.name}`,
       });
       setEditingAlertId(null);
+    }
+  };
+
+  const handleOpenSymptomsDialog = (alertId: string) => {
+    const alert = alerts.find(a => a.id === alertId);
+    if (alert) {
+      setEditingSymptomsAlertId(alertId);
+      setUpdatedSymptoms(alert.patient.complaint ? alert.patient.complaint.split(', ') : []);
+    }
+  };
+
+  const handleUpdateSymptoms = async () => {
+    const alert = alerts.find(a => a.id === editingSymptomsAlertId);
+    if (alert && updatedSymptoms.length > 0) {
+      await updatePatient(alert.patient.id, {
+        complaint: updatedSymptoms.join(', ')
+      });
+      toast({
+        title: "Symptoms Updated",
+        description: "Patient symptoms have been updated successfully.",
+      });
+      setEditingSymptomsAlertId(null);
     }
   };
 
@@ -169,7 +194,18 @@ const AmbulanceDashboard = () => {
                         <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
                           <div>Age: {alert.patient.age} • {alert.patient.gender}</div>
                           <div>Contact: {alert.patient.contact}</div>
-                          <div>Complaint: {alert.patient.complaint}</div>
+                          <div className="col-span-2 flex items-center justify-between">
+                            <span>Complaint: {alert.patient.complaint}</span>
+                            <Button
+                              onClick={() => handleOpenSymptomsDialog(alert.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs hover:bg-ambulance-border"
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Update
+                            </Button>
+                          </div>
                           <div>ETA: {alert.eta} min</div>
                         </div>
 
@@ -273,6 +309,45 @@ const AmbulanceDashboard = () => {
                 onAddHospital={addHospital}
               />
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!editingSymptomsAlertId} onOpenChange={(open) => !open && setEditingSymptomsAlertId(null)}>
+          <DialogContent className="max-w-2xl bg-ambulance-card border-ambulance-border">
+            <DialogHeader>
+              <DialogTitle className="text-ambulance-text">Update Patient Symptoms</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Add or modify the patient's symptoms and complaints.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="text-sm font-medium text-ambulance-text mb-2 block">
+                  Symptoms / Complaints
+                </label>
+                <MultipleSymptomDropdown
+                  values={updatedSymptoms}
+                  onChange={setUpdatedSymptoms}
+                  placeholder="Select or add symptoms..."
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingSymptomsAlertId(null)}
+                  className="border-ambulance-border hover:bg-ambulance-card"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleUpdateSymptoms}
+                  disabled={updatedSymptoms.length === 0}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Update Symptoms
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
