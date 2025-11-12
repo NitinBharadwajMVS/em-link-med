@@ -95,7 +95,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setAlerts(data.map(alert => ({
           id: alert.id,
           patient: {
-            id: alert.patient_id || alert.id,
+            id: alert.id, // Using alert id as patient id temporarily
             name: alert.patient_name,
             age: alert.patient_age || 0,
             gender: alert.patient_gender as 'male' | 'female' | 'other',
@@ -217,13 +217,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     // TEMPORARILY DISABLED: Patient table access requires migrations
     console.warn('sendAlert disabled - migrations pending');
     throw new Error('Alert functionality temporarily disabled - database migrations pending');
-
-    if (error) {
-      console.error('Error sending alert:', error);
-      throw error;
-    }
-
-    return selectedHospital;
   };
 
   const updateAlertStatus = async (
