@@ -29,6 +29,7 @@ export type Database = {
           patient_complaint: string | null
           patient_contact: string | null
           patient_gender: string | null
+          patient_id: string | null
           patient_name: string
           previous_hospital_ids: string[] | null
           required_equipment: string[] | null
@@ -52,6 +53,7 @@ export type Database = {
           patient_complaint?: string | null
           patient_contact?: string | null
           patient_gender?: string | null
+          patient_id?: string | null
           patient_name: string
           previous_hospital_ids?: string[] | null
           required_equipment?: string[] | null
@@ -75,6 +77,7 @@ export type Database = {
           patient_complaint?: string | null
           patient_contact?: string | null
           patient_gender?: string | null
+          patient_id?: string | null
           patient_name?: string
           previous_hospital_ids?: string[] | null
           required_equipment?: string[] | null
@@ -108,6 +111,7 @@ export type Database = {
           created_at: string | null
           current_latitude: number | null
           current_longitude: number | null
+          device_id: string | null
           equipment: string[] | null
           id: string
           updated_at: string | null
@@ -118,6 +122,7 @@ export type Database = {
           created_at?: string | null
           current_latitude?: number | null
           current_longitude?: number | null
+          device_id?: string | null
           equipment?: string[] | null
           id: string
           updated_at?: string | null
@@ -128,11 +133,20 @@ export type Database = {
           created_at?: string | null
           current_latitude?: number | null
           current_longitude?: number | null
+          device_id?: string | null
           equipment?: string[] | null
           id?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ambulances_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "live_vitals"
+            referencedColumns: ["device_id"]
+          },
+        ]
       }
       app_users: {
         Row: {
@@ -208,24 +222,98 @@ export type Database = {
       }
       live_vitals: {
         Row: {
+          ambulance_id: string | null
           device_id: string
           hr_bpm: number | null
           spo2_pct: number | null
           updated_at: string | null
         }
         Insert: {
+          ambulance_id?: string | null
           device_id: string
           hr_bpm?: number | null
           spo2_pct?: number | null
           updated_at?: string | null
         }
         Update: {
+          ambulance_id?: string | null
           device_id?: string
           hr_bpm?: number | null
           spo2_pct?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "live_vitals_ambulance_id_fkey"
+            columns: ["ambulance_id"]
+            isOneToOne: false
+            referencedRelation: "ambulances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          age: number
+          ambulance_id: string | null
+          complaint: string | null
+          contact: string
+          created_at: string | null
+          current_hospital_id: string | null
+          gender: string
+          id: string
+          medical_history: string[] | null
+          name: string
+          triage_level: string
+          updated_at: string | null
+          vitals: Json
+        }
+        Insert: {
+          age: number
+          ambulance_id?: string | null
+          complaint?: string | null
+          contact: string
+          created_at?: string | null
+          current_hospital_id?: string | null
+          gender: string
+          id?: string
+          medical_history?: string[] | null
+          name: string
+          triage_level: string
+          updated_at?: string | null
+          vitals: Json
+        }
+        Update: {
+          age?: number
+          ambulance_id?: string | null
+          complaint?: string | null
+          contact?: string
+          created_at?: string | null
+          current_hospital_id?: string | null
+          gender?: string
+          id?: string
+          medical_history?: string[] | null
+          name?: string
+          triage_level?: string
+          updated_at?: string | null
+          vitals?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_ambulance_id_fkey"
+            columns: ["ambulance_id"]
+            isOneToOne: false
+            referencedRelation: "ambulances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_current_hospital_id_fkey"
+            columns: ["current_hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
