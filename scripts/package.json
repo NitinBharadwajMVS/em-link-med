@@ -1,0 +1,12 @@
+{
+  "name": "seed-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Database seeding scripts for ambulance system",
+  "scripts": {
+    "seed": "node seed-hospitals.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.76.1"
+  }
+}

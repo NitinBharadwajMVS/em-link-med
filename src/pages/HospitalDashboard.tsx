@@ -1,15 +1,25 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { AlertCard } from '@/components/hospital/AlertCard';
 import { PatientHistoryDialog } from '@/components/history/PatientHistoryDialog';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Building2, AlertTriangle, Activity, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Building2, AlertTriangle, Activity, CheckCircle, LogOut } from 'lucide-react';
 import { playAlertSound } from '@/utils/alertSounds';
 
 const HospitalDashboard = () => {
-  const { alerts } = useApp();
+  const { alerts, currentUser, currentHospitalId, logout, hospitals } = useApp();
+  const navigate = useNavigate();
   const previousAlertCount = useRef(alerts.length);
+
+  const currentHospital = hospitals.find(h => h.id === currentHospitalId);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const activeAlerts = alerts.filter(a => a.status !== 'completed');
   const completedAlerts = alerts.filter(a => a.status === 'completed');
@@ -35,15 +45,25 @@ const HospitalDashboard = () => {
               <Building2 className="w-7 h-7 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Hospital Emergency Center</h1>
-              <p className="text-muted-foreground">Real-time Ambulance Pre-Alerts</p>
+              <h1 className="text-3xl font-bold">{currentHospital?.name || 'Hospital Emergency Center'}</h1>
+              <p className="text-muted-foreground">Real-time Ambulance Pre-Alerts • {currentUser?.username}</p>
             </div>
           </div>
-          <PatientHistoryDialog 
-            alerts={alerts} 
-            title="Patient Case History" 
-            variant="hospital"
-          />
+          <div className="flex items-center gap-3">
+            <PatientHistoryDialog 
+              alerts={alerts} 
+              title="Patient Case History" 
+              variant="hospital"
+            />
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6 mb-8">

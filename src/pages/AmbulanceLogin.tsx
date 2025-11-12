@@ -13,14 +13,20 @@ const AmbulanceLogin = () => {
   const { login } = useApp();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!ambulanceId || !passcode) {
       toast.error('Please enter ambulance ID and passcode');
       return;
     }
-    login(ambulanceId);
-    toast.success('Login successful');
-    navigate('/ambulance');
+    
+    try {
+      await login(ambulanceId, passcode);
+      toast.success('Login successful');
+      navigate('/ambulance');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Invalid credentials');
+    }
   };
 
   return (
@@ -41,10 +47,10 @@ const AmbulanceLogin = () => {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="ambulanceId" className="text-ambulance-text">Ambulance ID</Label>
+            <Label htmlFor="ambulanceId" className="text-ambulance-text">Username or Ambulance ID</Label>
             <Input
               id="ambulanceId"
-              placeholder="Enter ambulance ID (e.g., AMB123)"
+              placeholder="Enter username (e.g., amb1) or ID"
               className="bg-ambulance-card border-ambulance-border text-ambulance-text"
               value={ambulanceId}
               onChange={(e) => setAmbulanceId(e.target.value)}

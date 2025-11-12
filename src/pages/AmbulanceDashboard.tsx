@@ -17,12 +17,12 @@ import { calculateETA } from '@/utils/distanceCalculator';
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
   const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
-  const { logout, alerts, completeCase, currentUser, hospitals, changeHospital, addHospital, importHospitals } = useApp();
+  const { logout, alerts, completeCase, currentUser, hospitals, changeHospital, addHospital } = useApp();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const activeAlerts = alerts.filter(
-    alert => alert.ambulanceId === currentUser && alert.status !== 'completed'
+    alert => alert.ambulanceId === currentUser?.linkedEntity && alert.status !== 'completed'
   );
 
   const handleLogout = () => {

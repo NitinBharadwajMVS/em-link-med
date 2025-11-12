@@ -41,7 +41,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
-  const handleSendAlert = () => {
+  const handleSendAlert = async () => {
     let patientData: Patient;
 
     if (isNewPatient) {
@@ -75,24 +75,39 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
       return;
     }
 
-    const hospital = sendAlert(
-      patientData,
-      currentUser || 'AMB-001',
-      selectedHospitalId,
-      requiredEquipment.length > 0 ? requiredEquipment : undefined
-    );
-    
-    const eta = calculateETA(hospital.distance);
+    const selectedHospital = hospitals.find(h => h.id === selectedHospitalId);
+    if (!selectedHospital) {
+      toast.error('Hospital not found');
+      return;
+    }
 
-    toast.success(
-      `Pre-alert sent to ${hospital.name}`,
-      {
-        description: `Distance: ${hospital.distance} km | ETA: ${eta} minutes`,
-        duration: 5000,
-      }
-    );
+    const ambulanceId = currentUser?.linkedEntity || 'amb-001';
+    const distance = selectedHospital.distance || 0;
+    const eta = calculateETA(distance);
 
-    setTimeout(onClose, 1500);
+    try {
+      const hospital = await sendAlert(
+        patientData,
+        ambulanceId,
+        selectedHospitalId,
+        distance,
+        eta,
+        requiredEquipment.length > 0 ? requiredEquipment : undefined
+      );
+      
+      toast.success(
+        `Pre-alert sent to ${hospital.name}`,
+        {
+          description: `Distance: ${distance.toFixed(2)} km | ETA: ${eta} minutes`,
+          duration: 5000,
+        }
+      );
+
+      setTimeout(onClose, 1500);
+    } catch (error) {
+      console.error('Error sending alert:', error);
+      toast.error('Failed to send pre-alert');
+    }
   };
 
   return (

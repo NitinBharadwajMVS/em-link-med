@@ -13,14 +13,20 @@ const HospitalLogin = () => {
   const { login } = useApp();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!hospitalId || !passcode) {
       toast.error('Please enter hospital ID and passcode');
       return;
     }
-    login(hospitalId);
-    toast.success('Login successful');
-    navigate('/hospital');
+    
+    try {
+      await login(hospitalId, passcode);
+      toast.success('Login successful');
+      navigate('/hospital');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Invalid credentials');
+    }
   };
 
   return (
@@ -41,10 +47,10 @@ const HospitalLogin = () => {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="hospitalId" className="text-hospital-text">Hospital ID</Label>
+            <Label htmlFor="hospitalId" className="text-hospital-text">Username or Hospital ID</Label>
             <Input
               id="hospitalId"
-              placeholder="Enter hospital ID (e.g., HOSP001)"
+              placeholder="Enter username (e.g., fortis, apollo)"
               className="bg-hospital-card border-hospital-border text-hospital-text"
               value={hospitalId}
               onChange={(e) => setHospitalId(e.target.value)}
