@@ -10,11 +10,12 @@ interface AppContextType {
   currentUser: { id: string; username: string; role: string; linkedEntity: string | null } | null;
   currentHospitalId: string | null;
   currentAmbulanceId: string | null;
-  addPatient: (patient: Patient) => void;
-  sendAlert: (patient: Patient, ambulanceId: string, hospitalId: string, distance?: number, eta?: number, requiredEquipment?: string[]) => Promise<Hospital>;
+  addPatient: (patient: Patient) => Promise<string>;
+  updatePatient: (patientId: string, updates: Partial<Patient>) => Promise<void>;
+  sendAlert: (patientId: string, ambulanceId: string, hospitalId: string, distance?: number, eta?: number, requiredEquipment?: string[]) => Promise<Hospital>;
   updateAlertStatus: (alertId: string, status: 'acknowledged' | 'accepted' | 'declined', declineReason?: string) => Promise<void>;
   completeCase: (alertId: string) => Promise<void>;
-  changeHospital: (alertId: string, newHospitalId: string, reason: string) => Promise<void>;
+  changeHospital: (patientId: string, newHospitalId: string, reason: string) => Promise<void>;
   markHospitalUnavailable: (alertId: string, hospitalId: string, reason: string) => Promise<void>;
   addHospital: (hospital: Hospital) => Promise<void>;
   login: (usernameOrEmail: string, password: string) => Promise<void>;
@@ -155,12 +156,48 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [currentUser, currentHospitalId]);
 
-  const addPatient = (patient: Patient) => {
-    setPatients((prev) => [...prev, patient]);
+  const addPatient = async (patient: Patient): Promise<string> => {
+    const { data, error } = await supabase.from('patients').insert({
+      name: patient.name,
+      age: patient.age,
+      gender: patient.gender,
+      contact: patient.contact,
+      complaint: patient.complaint,
+      triage_level: patient.triageLevel,
+      vitals: patient.vitals as any,
+      medical_history: patient.medicalHistory || [],
+      current_hospital_id: null,
+      ambulance_id: currentAmbulanceId
+    }).select('id').single();
+
+    if (error) {
+      console.error('Error adding patient:', error);
+      throw error;
+    }
+
+    return data.id;
+  };
+
+  const updatePatient = async (patientId: string, updates: Partial<Patient>) => {
+    const updateData: any = {};
+    if (updates.complaint) updateData.complaint = updates.complaint;
+    if (updates.triageLevel) updateData.triage_level = updates.triageLevel;
+    if (updates.vitals) updateData.vitals = updates.vitals;
+    if (updates.medicalHistory) updateData.medical_history = updates.medicalHistory;
+
+    const { error } = await supabase
+      .from('patients')
+      .update(updateData)
+      .eq('id', patientId);
+
+    if (error) {
+      console.error('Error updating patient:', error);
+      throw error;
+    }
   };
 
   const sendAlert = async (
-    patient: Patient,
+    patientId: string,
     ambulanceId: string,
     hospitalId: string,
     distance?: number,
@@ -171,6 +208,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!selectedHospital) {
       throw new Error('Hospital not found');
     }
+
+    // Update patient's current hospital
+    await supabase
+      .from('patients')
+      .update({ current_hospital_id: hospitalId })
+      .eq('id', patientId);
+
+    // Get patient data for alert
+    const { data: patientData } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('id', patientId)
+      .single();
 
     const alertId = `A${Date.now()}`;
     const auditLog = [
@@ -184,15 +234,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const { error } = await supabase.from('alerts').insert({
       id: alertId,
+      patient_id: patientId,
       hospital_id: hospitalId,
       ambulance_id: ambulanceId,
-      patient_name: patient.name,
-      patient_age: patient.age,
-      patient_gender: patient.gender,
-      patient_contact: patient.contact,
-      patient_complaint: patient.complaint,
-      triage_level: patient.triageLevel,
-      vitals: patient.vitals as any,
+      patient_name: patientData?.name || '',
+      patient_age: patientData?.age || 0,
+      patient_gender: patientData?.gender || 'other',
+      patient_contact: patientData?.contact || '',
+      patient_complaint: patientData?.complaint || '',
+      triage_level: patientData?.triage_level || 'stable',
+      vitals: patientData?.vitals || {},
       distance: distance || null,
       eta: eta || null,
       status: 'pending',
@@ -270,32 +321,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const changeHospital = async (alertId: string, newHospitalId: string, reason: string) => {
-    const alert = alerts.find(a => a.id === alertId);
-    if (!alert) return;
-
-    const oldHospital = hospitals.find((h) => h.id === alert.hospitalId);
-    const newHospital = hospitals.find((h) => h.id === newHospitalId);
-
-    const newLog: AuditLog = {
-      timestamp: new Date().toISOString(),
-      action: 'Hospital changed',
-      actor: alert.ambulanceId,
-      details: `Changed from ${oldHospital?.name} to ${newHospital?.name}. Reason: ${reason}`,
-    };
-
-    const updatedAuditLog = [...alert.auditLog, newLog];
-    const updatedPreviousIds = [...(alert.previousHospitalIds || []), alert.hospitalId];
-
+  const changeHospital = async (patientId: string, newHospitalId: string, reason: string) => {
+    // Update patient's current hospital - trigger will handle alert updates
     const { error } = await supabase
-      .from('alerts')
-      .update({
-        hospital_id: newHospitalId,
-        previous_hospital_ids: updatedPreviousIds,
-        status: 'pending',
-        audit_log: updatedAuditLog as any
-      })
-      .eq('id', alertId);
+      .from('patients')
+      .update({ current_hospital_id: newHospitalId })
+      .eq('id', patientId);
 
     if (error) {
       console.error('Error changing hospital:', error);
@@ -416,6 +447,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         currentHospitalId,
         currentAmbulanceId,
         addPatient,
+        updatePatient,
         sendAlert,
         updateAlertStatus,
         completeCase,

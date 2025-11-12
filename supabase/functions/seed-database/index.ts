@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       const shortname = generateShortname(hospital.name);
       const username = shortname.toLowerCase();
       const internalEmail = `${username}@internal.example`;
-      const password = `${shortname}@123`;
+      const password = '12345678'; // Standard password for all hospitals
 
       try {
         // 1. Create auth user
