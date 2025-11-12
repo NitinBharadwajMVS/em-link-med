@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Alert } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Activity, Clock, User, Phone, ChevronDown, ChevronUp, Check, XCircle, AlertTriangle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AlertCardProps {
   alert: Alert;
@@ -28,6 +29,7 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [declineReason, setDeclineReason] = useState('');
   const [isDeclineDialogOpen, setIsDeclineDialogOpen] = useState(false);
+  const [liveVitals, setLiveVitals] = useState<{ spo2: number; heartRate: number } | null>(null);
   const { updateAlertStatus, hospitals } = useApp();
   const { patient } = alert;
 
@@ -59,6 +61,42 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
     setIsDeclineDialogOpen(false);
     setDeclineReason('');
   };
+
+  // Subscribe to live vitals when alert is acknowledged or accepted
+  useEffect(() => {
+    if (alert.status !== 'acknowledged' && alert.status !== 'accepted') {
+      return;
+    }
+
+    console.log('Setting up live vitals subscription for ambulance:', alert.ambulanceId);
+
+    const channel = supabase
+      .channel(`live-vitals-${alert.ambulanceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_vitals',
+          filter: `ambulance_id=eq.${alert.ambulanceId}`
+        },
+        (payload) => {
+          console.log('Live vitals update:', payload);
+          if (payload.new && typeof payload.new === 'object') {
+            const data = payload.new as any;
+            setLiveVitals({
+              spo2: data.spo2_pct || patient.vitals.spo2,
+              heartRate: data.hr_bpm || patient.vitals.heartRate
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [alert.status, alert.ambulanceId, patient.vitals.spo2, patient.vitals.heartRate]);
 
   return (
     <Card
@@ -124,15 +162,19 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
 
       <div className="grid grid-cols-4 gap-3 mb-4 text-center">
         <div className="p-2 bg-card rounded-lg">
-          <div className="text-xs text-muted-foreground">SpO₂</div>
-          <div className={cn("font-bold text-lg", patient.vitals.spo2 < 94 && "text-critical")}>
-            {patient.vitals.spo2}%
+          <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+            SpO₂ {liveVitals && <span className="text-[10px] text-stable">●LIVE</span>}
+          </div>
+          <div className={cn("font-bold text-lg", (liveVitals?.spo2 || patient.vitals.spo2) < 94 && "text-critical")}>
+            {liveVitals?.spo2 || patient.vitals.spo2}%
           </div>
         </div>
         <div className="p-2 bg-card rounded-lg">
-          <div className="text-xs text-muted-foreground">HR</div>
-          <div className={cn("font-bold text-lg", patient.vitals.heartRate > 100 && "text-urgent")}>
-            {patient.vitals.heartRate}
+          <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+            HR {liveVitals && <span className="text-[10px] text-stable">●LIVE</span>}
+          </div>
+          <div className={cn("font-bold text-lg", (liveVitals?.heartRate || patient.vitals.heartRate) > 100 && "text-urgent")}>
+            {liveVitals?.heartRate || patient.vitals.heartRate}
           </div>
         </div>
         <div className="p-2 bg-card rounded-lg">

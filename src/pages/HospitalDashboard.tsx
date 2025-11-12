@@ -21,8 +21,12 @@ const HospitalDashboard = () => {
     navigate('/');
   };
 
-  const activeAlerts = alerts.filter(a => a.status !== 'completed');
-  const completedAlerts = alerts.filter(a => a.status === 'completed');
+  const activeAlerts = alerts.filter(a => 
+    a.status !== 'completed' && a.status !== 'cancelled' && a.status !== 'declined'
+  );
+  const completedAlerts = alerts.filter(a => 
+    a.status === 'completed' || a.status === 'cancelled' || a.status === 'declined'
+  );
 
   const criticalCount = activeAlerts.filter(a => a.patient.triageLevel === 'critical' && a.status === 'pending').length;
   const urgentCount = activeAlerts.filter(a => a.patient.triageLevel === 'urgent' && a.status === 'pending').length;
@@ -134,8 +138,14 @@ const HospitalDashboard = () => {
             <div className="space-y-4">
               {completedAlerts.map(alert => (
                 <Card key={alert.id} className="p-6 glass-effect border-stable/30 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-stable text-white px-4 py-1 rounded-bl-lg text-sm font-semibold flex items-center gap-2">
-                    ✅ Patient Dropped
+                  <div className={`absolute top-0 right-0 px-4 py-1 rounded-bl-lg text-sm font-semibold flex items-center gap-2 ${
+                    alert.status === 'completed' ? 'bg-stable text-white' :
+                    alert.status === 'cancelled' ? 'bg-urgent text-white' :
+                    'bg-critical text-white'
+                  }`}>
+                    {alert.status === 'completed' ? '✅ Patient Dropped' :
+                     alert.status === 'cancelled' ? '🔄 Hospital Changed' :
+                     '❌ Declined'}
                     <span className="text-xs opacity-80">
                       {alert.completedAt && new Date(alert.completedAt).toLocaleTimeString()}
                     </span>

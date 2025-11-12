@@ -354,15 +354,51 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const changeHospital = async (patientId: string, newHospitalId: string, reason: string) => {
-    // Update patient's current hospital - trigger will handle alert updates
-    const { error } = await supabase
-      .from('patients')
-      .update({ current_hospital_id: newHospitalId })
-      .eq('id', patientId);
+    // Find the existing alert for this patient
+    const existingAlert = alerts.find(a => 
+      a.patient.id === patientId && 
+      (a.status === 'pending' || a.status === 'acknowledged' || a.status === 'accepted')
+    );
 
-    if (error) {
-      console.error('Error changing hospital:', error);
-      throw error;
+    if (existingAlert) {
+      // Mark the old alert as cancelled with reason
+      const newLog: AuditLog = {
+        timestamp: new Date().toISOString(),
+        action: 'Hospital changed',
+        actor: existingAlert.ambulanceId,
+        details: `Hospital changed: ${reason}`,
+      };
+
+      const updatedAuditLog = [...existingAlert.auditLog, newLog];
+
+      await supabase
+        .from('alerts')
+        .update({
+          status: 'cancelled',
+          decline_reason: `Hospital changed: ${reason}`,
+          audit_log: updatedAuditLog as any,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', existingAlert.id);
+
+      // Update patient's current hospital
+      await supabase
+        .from('patients')
+        .update({ current_hospital_id: newHospitalId })
+        .eq('id', patientId);
+
+      // Create new alert at the new hospital
+      const newHospital = hospitals.find(h => h.id === newHospitalId);
+      if (newHospital) {
+        await sendAlert(
+          patientId,
+          existingAlert.ambulanceId,
+          newHospitalId,
+          existingAlert.eta,
+          existingAlert.eta,
+          existingAlert.requiredEquipment
+        );
+      }
     }
   };
 
