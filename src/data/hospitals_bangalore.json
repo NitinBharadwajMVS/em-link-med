@@ -1,16 +1,5 @@
 [
   {
-    "id": "1",
-    "name": "Manipal Hospital Whitefield",
-    "distance": 1.2,
-    "latitude": 12.9897,
-    "longitude": 77.7253,
-    "address": "ITPL Main Rd, KIADB Export Promotion Industrial Area, Whitefield, Bangalore",
-    "contact": "+91-80-6629-6629",
-    "equipment": ["Ventilator", "ICU", "CT Scan", "MRI", "Defibrillator", "Oxygen", "Cardiac Monitor", "Cath Lab"],
-    "specialties": ["Cardiology", "Emergency", "Neurology", "Orthopedics"]
-  },
-  {
     "id": "2",
     "name": "Fortis Hospital Bannerghatta Road",
     "distance": 1.5,
