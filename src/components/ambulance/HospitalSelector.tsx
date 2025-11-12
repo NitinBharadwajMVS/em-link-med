@@ -175,124 +175,85 @@ export const HospitalSelector = ({
               </Button>
             </DialogTrigger>
             <DialogContent className="hospital-panel max-w-4xl h-[90vh] flex flex-col p-0 z-[100]">
-              <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-b from-background to-muted/20">
-                <DialogTitle className="text-xl">
-                  Select Hospital
-                </DialogTitle>
-                <DialogDescription>
-                  Showing hospitals sorted by distance from ambulance location
-                </DialogDescription>
+              <DialogHeader className="px-6 py-4 border-b flex flex-row items-center justify-between space-y-0">
+                <div className="flex-1">
+                  <DialogTitle className="text-xl">Select Hospital</DialogTitle>
+                  <DialogDescription className="text-xs mt-1">
+                    Sorted by distance • {filteredHospitals.length} hospitals
+                  </DialogDescription>
+                </div>
+                
+                {/* Compact location control */}
+                <div className="flex items-center gap-2">
+                  {ambulanceLocation ? (
+                    <>
+                      <MapPin className={cn("w-4 h-4", usingFallback ? "text-amber-500" : "text-primary")} />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={requestGeolocation}
+                        disabled={geolocationStatus === 'requesting'}
+                        className="h-8 w-8"
+                        title="Refresh location"
+                      >
+                        <RefreshCw className={cn("w-4 h-4", geolocationStatus === 'requesting' && "animate-spin")} />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={requestGeolocation}
+                      variant="default"
+                      size="sm"
+                      disabled={geolocationStatus === 'requesting'}
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {geolocationStatus === 'requesting' ? 'Getting...' : 'Get Location'}
+                    </Button>
+                  )}
+                </div>
               </DialogHeader>
 
-              <div className="px-6 py-4 space-y-3 border-b">
-                {/* Dev log */}
-                {ambulanceLocation && (
-                  <div className="p-3 bg-muted/50 rounded-lg border text-xs font-mono space-y-1">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        Location: {ambulanceLocation.latitude.toFixed(4)}, {ambulanceLocation.longitude.toFixed(4)}
-                        {usingFallback && <span className="ml-2 text-amber-600">(Fallback)</span>}
-                      </span>
-                    </div>
-                    <div className="text-muted-foreground">
-                      ETA Method: {etaMethod === 'routing' ? '🌐 Routing API' : '📐 Haversine (40 km/h)'}
-                    </div>
-                  </div>
-                )}
-
-                {/* Geolocation permission flow */}
-                {!ambulanceLocation && (
-                  <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                    {geolocationStatus === 'idle' && (
-                      <Button
-                        onClick={requestGeolocation}
-                        variant="default"
-                        size="sm"
-                        className="w-full"
-                      >
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Get Ambulance Location
-                      </Button>
-                    )}
-                    {geolocationStatus === 'requesting' && (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        <span className="text-sm">Requesting location permission...</span>
-                      </>
-                    )}
-                    {geolocationStatus === 'denied' && (
-                      <>
-                        <MapPin className="w-4 h-4 text-amber-500" />
-                        <div className="flex-1 text-sm">
-                          Location denied. Using fallback.
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={requestGeolocation}
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                          Retry
-                        </Button>
-                      </>
-                    )}
-                    {geolocationStatus === 'error' && (
-                      <>
-                        <MapPin className="w-4 h-4 text-red-500" />
-                        <span className="text-sm">Location error. Using fallback.</span>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Retry button when location is active */}
-                {ambulanceLocation && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={requestGeolocation}
-                    disabled={geolocationStatus === 'requesting'}
-                    className="w-full"
-                  >
-                    <RefreshCw className={cn("w-4 h-4 mr-2", geolocationStatus === 'requesting' && "animate-spin")} />
-                    Refresh Location
-                  </Button>
-                )}
-
-                {/* Search Input - Full Width */}
-                <div className="relative">
+              {/* Compact controls row */}
+              <div className="px-6 py-3 border-b flex gap-2">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
-                    placeholder="Search hospitals by name or locality..."
+                    placeholder="Search hospitals..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-full"
+                    className="pl-10"
                   />
                 </div>
-
-                {/* Add Hospital button */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowAddDialog(true)}
-                  className="w-full flex items-center justify-center gap-2"
+                  className="flex items-center gap-2 whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Hospital
+                  Add
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 px-6 hospital-list-scroll">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              {/* Dev log - compact */}
+              {ambulanceLocation && (
+                <div className="px-6 py-2 bg-muted/30 text-[10px] font-mono text-muted-foreground border-b">
+                  Location: {ambulanceLocation.latitude.toFixed(4)}, {ambulanceLocation.longitude.toFixed(4)}
+                  {usingFallback && <span className="ml-2 text-amber-600">(Fallback)</span>}
+                  <span className="ml-3">• ETA: {etaMethod === 'routing' ? 'Routing API' : 'Haversine (40 km/h)'}</span>
+                </div>
+              )}
+
+              <ScrollArea className="flex-1 px-6 hospital-list-scroll-expanded">
+                <div className="flex flex-col gap-4 py-4">
                   {!ambulanceLocation && (
-                    <div className="col-span-full text-center py-12 text-muted-foreground">
+                    <div className="text-center py-12 text-muted-foreground">
                       <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>Please enable location to view nearby hospitals</p>
                     </div>
                   )}
                   {ambulanceLocation && filteredHospitals.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                    <div className="text-center py-8 text-muted-foreground">
                       No hospitals found matching your search.
                     </div>
                   )}

@@ -39,67 +39,70 @@ export const HospitalRow = ({ hospital, isSelected, onSelect }: HospitalRowProps
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "p-4 transition-all border shadow-sm cursor-pointer min-h-[96px]",
-        isSelected && "ring-2 ring-primary bg-primary/5 border-primary",
+        "p-5 transition-all border shadow-sm cursor-pointer min-h-[110px] w-full",
+        isSelected && "ring-2 ring-primary bg-primary/5 border-primary shadow-lg",
         !isSelected && "hover:border-primary/50 hover:shadow-md"
       )}
     >
-      <div className="flex items-start gap-3 mb-3">
-        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <Building2 className="w-6 h-6 text-primary" />
+      <div className="flex items-center gap-5">
+        {/* Larger icon */}
+        <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Building2 className="w-8 h-8 text-primary" />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className="font-semibold text-base leading-tight line-clamp-2 break-words">
+
+        {/* Hospital info */}
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-semibold text-lg leading-tight line-clamp-2 break-words">
               {hospital.name}
             </h3>
             {isSelected && (
-              <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+              <CheckCircle className="w-6 h-6 text-primary flex-shrink-0" />
             )}
           </div>
+          
           <p className="text-sm text-muted-foreground line-clamp-1 break-words">
             {locality}
           </p>
-        </div>
-      </div>
 
-      <div className="space-y-2 mb-3">
-        {hospital.contact && (
-          <div className="flex items-center gap-2 text-sm">
-            <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            <a 
-              href={`tel:${hospital.contact}`} 
-              className="hover:text-primary truncate"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {hospital.contact}
-            </a>
+          {hospital.contact && (
+            <div className="flex items-center gap-2 text-sm">
+              <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <a 
+                href={`tel:${hospital.contact}`} 
+                className="hover:text-primary truncate font-medium"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {hospital.contact}
+              </a>
+            </div>
+          )}
+
+          <div className="flex gap-2 flex-wrap mt-2">
+            <Badge variant="outline" className="flex items-center gap-1.5 px-2.5 py-1">
+              <Navigation className="w-3.5 h-3.5" />
+              <span className="font-medium">{distance > 0 ? distance.toFixed(2) : '—'} km</span>
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-1.5 px-2.5 py-1">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="font-medium">{eta > 0 ? `${eta} min` : '—'}</span>
+            </Badge>
           </div>
-        )}
-        
-        <div className="flex gap-2 flex-wrap">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Navigation className="w-3 h-3" />
-            {distance > 0 ? distance.toFixed(2) : '—'} km
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {eta > 0 ? `${eta} min` : '—'}
-          </Badge>
         </div>
-      </div>
 
-      <Button
-        size="sm"
-        variant={isSelected ? "default" : "outline"}
-        className="w-full min-h-[44px] touch-manipulation"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleClick();
-        }}
-      >
-        {isSelected ? 'Selected' : 'Select'}
-      </Button>
+        {/* Select button */}
+        <Button
+          size="lg"
+          variant={isSelected ? "default" : "outline"}
+          className="min-h-[48px] min-w-[100px] touch-manipulation flex-shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
+        >
+          {isSelected ? 'Selected' : 'Select'}
+        </Button>
+      </div>
     </Card>
   );
 };
