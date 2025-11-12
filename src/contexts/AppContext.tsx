@@ -47,37 +47,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Load patients from Supabase
-  // TEMPORARILY DISABLED: Requires migrations to be applied first
-  // useEffect(() => {
-  //   const loadPatients = async () => {
-  //     if (!currentUser || !currentAmbulanceId) return;
+  useEffect(() => {
+    const loadPatients = async () => {
+      if (!currentUser || !currentAmbulanceId) return;
 
-  //     const { data, error } = await supabase
-  //       .from('patients')
-  //       .select('*')
-  //       .eq('ambulance_id', currentAmbulanceId)
-  //       .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('ambulance_id', currentAmbulanceId)
+        .order('created_at', { ascending: false });
 
-  //     if (error) {
-  //       console.error('Error loading patients:', error);
-  //     } else if (data) {
-  //       setPatients(data.map(p => ({
-  //         id: p.id,
-  //         name: p.name,
-  //         age: p.age,
-  //         gender: p.gender as 'male' | 'female' | 'other',
-  //         contact: p.contact,
-  //         complaint: p.complaint || '',
-  //         triageLevel: p.triage_level as any,
-  //         vitals: p.vitals as any,
-  //         medicalHistory: p.medical_history || [],
-  //         timestamp: p.created_at || new Date().toISOString()
-  //       })));
-  //     }
-  //   };
+      if (error) {
+        console.error('Error loading patients:', error);
+      } else if (data) {
+        setPatients(data.map(p => ({
+          id: p.id,
+          name: p.name,
+          age: p.age,
+          gender: p.gender as 'male' | 'female' | 'other',
+          contact: p.contact,
+          complaint: p.complaint || '',
+          triageLevel: p.triage_level as any,
+          vitals: p.vitals as any,
+          medicalHistory: p.medical_history || [],
+          timestamp: p.created_at || new Date().toISOString()
+        })));
+      }
+    };
 
-  //   loadPatients();
-  // }, [currentUser, currentAmbulanceId]);
+    loadPatients();
+  }, [currentUser, currentAmbulanceId]);
 
   // Load alerts from Supabase
   useEffect(() => {
@@ -95,7 +94,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setAlerts(data.map(alert => ({
           id: alert.id,
           patient: {
-            id: alert.id, // Using alert id as patient id temporarily
+            id: alert.patient_id || alert.id,
             name: alert.patient_name,
             age: alert.patient_age || 0,
             gender: alert.patient_gender as 'male' | 'female' | 'other',
@@ -189,16 +188,44 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [currentUser, currentHospitalId]);
 
-  // TEMPORARILY DISABLED: Requires migrations to be applied first
   const addPatient = async (patient: Patient): Promise<string> => {
-    console.warn('addPatient disabled - migrations pending');
-    throw new Error('Patient functionality temporarily disabled - database migrations pending');
+    const { data, error } = await supabase.from('patients').insert({
+      name: patient.name,
+      age: patient.age,
+      gender: patient.gender,
+      contact: patient.contact,
+      complaint: patient.complaint,
+      triage_level: patient.triageLevel,
+      vitals: patient.vitals as any,
+      medical_history: patient.medicalHistory || [],
+      current_hospital_id: null,
+      ambulance_id: currentAmbulanceId
+    }).select('id').single();
+
+    if (error) {
+      console.error('Error adding patient:', error);
+      throw error;
+    }
+
+    return data.id;
   };
 
-  // TEMPORARILY DISABLED: Requires migrations to be applied first
   const updatePatient = async (patientId: string, updates: Partial<Patient>) => {
-    console.warn('updatePatient disabled - migrations pending');
-    throw new Error('Patient functionality temporarily disabled - database migrations pending');
+    const updateData: any = {};
+    if (updates.complaint) updateData.complaint = updates.complaint;
+    if (updates.triageLevel) updateData.triage_level = updates.triageLevel;
+    if (updates.vitals) updateData.vitals = updates.vitals;
+    if (updates.medicalHistory) updateData.medical_history = updates.medicalHistory;
+
+    const { error } = await supabase
+      .from('patients')
+      .update(updateData)
+      .eq('id', patientId);
+
+    if (error) {
+      console.error('Error updating patient:', error);
+      throw error;
+    }
   };
 
   const sendAlert = async (
@@ -214,9 +241,55 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Hospital not found');
     }
 
-    // TEMPORARILY DISABLED: Patient table access requires migrations
-    console.warn('sendAlert disabled - migrations pending');
-    throw new Error('Alert functionality temporarily disabled - database migrations pending');
+    // Update patient's current hospital
+    await supabase
+      .from('patients')
+      .update({ current_hospital_id: hospitalId })
+      .eq('id', patientId);
+
+    // Get patient data for alert
+    const { data: patientData } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('id', patientId)
+      .single();
+
+    const alertId = `A${Date.now()}`;
+    const auditLog = [
+      {
+        timestamp: new Date().toISOString(),
+        action: 'Pre-alert sent',
+        actor: ambulanceId,
+        details: `Sent to ${selectedHospital.name}`,
+      },
+    ];
+
+    const { error } = await supabase.from('alerts').insert({
+      id: alertId,
+      patient_id: patientId,
+      hospital_id: hospitalId,
+      ambulance_id: ambulanceId,
+      patient_name: patientData?.name || '',
+      patient_age: patientData?.age || 0,
+      patient_gender: patientData?.gender || 'other',
+      patient_contact: patientData?.contact || '',
+      patient_complaint: patientData?.complaint || '',
+      triage_level: patientData?.triage_level || 'stable',
+      vitals: patientData?.vitals || {},
+      distance: distance || null,
+      eta: eta || null,
+      status: 'pending',
+      required_equipment: requiredEquipment || [],
+      audit_log: auditLog as any,
+      timestamp: new Date().toISOString()
+    });
+
+    if (error) {
+      console.error('Error sending alert:', error);
+      throw error;
+    }
+
+    return selectedHospital;
   };
 
   const updateAlertStatus = async (
@@ -280,10 +353,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // TEMPORARILY DISABLED: Requires migrations to be applied first
   const changeHospital = async (patientId: string, newHospitalId: string, reason: string) => {
-    console.warn('changeHospital disabled - migrations pending');
-    throw new Error('Hospital change functionality temporarily disabled - database migrations pending');
+    // Update patient's current hospital - trigger will handle alert updates
+    const { error } = await supabase
+      .from('patients')
+      .update({ current_hospital_id: newHospitalId })
+      .eq('id', patientId);
+
+    if (error) {
+      console.error('Error changing hospital:', error);
+      throw error;
+    }
   };
 
   const markHospitalUnavailable = async (alertId: string, hospitalId: string, reason: string) => {
