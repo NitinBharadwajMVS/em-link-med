@@ -16,35 +16,29 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
   const [isSimulated, setIsSimulated] = useState(false);
 
   // Get device_id for current ambulance
-  // TEMPORARILY DISABLED: Requires migrations to be applied first
   useEffect(() => {
-    // Always use simulated data until migrations are applied
-    console.log('Using simulated data (migrations pending)');
-    setIsSimulated(true);
-    
-    // TODO: Uncomment after migrations are applied
-    // const getDeviceId = async () => {
-    //   if (!currentAmbulanceId) {
-    //     setIsSimulated(true);
-    //     return;
-    //   }
+    const getDeviceId = async () => {
+      if (!currentAmbulanceId) {
+        setIsSimulated(true);
+        return;
+      }
 
-    //   const { data, error } = await supabase
-    //     .from('ambulances')
-    //     .select('device_id')
-    //     .eq('id', currentAmbulanceId)
-    //     .single();
+      const { data, error } = await supabase
+        .from('ambulances')
+        .select('device_id')
+        .eq('id', currentAmbulanceId)
+        .single();
 
-    //   if (error || !data?.device_id) {
-    //     console.log('No device linked, using simulated data');
-    //     setIsSimulated(true);
-    //   } else {
-    //     setDeviceId(data.device_id);
-    //     setIsSimulated(false);
-    //   }
-    // };
+      if (error || !data?.device_id) {
+        console.log('No device linked, using simulated data');
+        setIsSimulated(true);
+      } else {
+        setDeviceId(data.device_id);
+        setIsSimulated(false);
+      }
+    };
 
-    // getDeviceId();
+    getDeviceId();
   }, [currentAmbulanceId]);
 
   // Subscribe to real-time vitals updates if device is linked
