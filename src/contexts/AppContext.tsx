@@ -33,6 +33,71 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [currentAmbulanceId, setCurrentAmbulanceId] = useState<string | null>(null);
   const [alertsChannel, setAlertsChannel] = useState<RealtimeChannel | null>(null);
 
+  // Restore session on mount and listen for auth changes
+  useEffect(() => {
+    const restoreSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const { data: appUser } = await supabase
+          .from('app_users')
+          .select('*')
+          .eq('auth_uid', session.user.id)
+          .single();
+
+        if (appUser) {
+          setCurrentUser({
+            id: session.user.id,
+            username: appUser.username,
+            role: appUser.role,
+            linkedEntity: appUser.linked_entity
+          });
+
+          if (appUser.role === 'hospital') {
+            setCurrentHospitalId(appUser.linked_entity);
+          } else if (appUser.role === 'ambulance') {
+            setCurrentAmbulanceId(appUser.linked_entity);
+          }
+        }
+      }
+    };
+
+    restoreSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        setCurrentHospitalId(null);
+        setCurrentAmbulanceId(null);
+      } else if (session?.user) {
+        const { data: appUser } = await supabase
+          .from('app_users')
+          .select('*')
+          .eq('auth_uid', session.user.id)
+          .single();
+
+        if (appUser) {
+          setCurrentUser({
+            id: session.user.id,
+            username: appUser.username,
+            role: appUser.role,
+            linkedEntity: appUser.linked_entity
+          });
+
+          if (appUser.role === 'hospital') {
+            setCurrentHospitalId(appUser.linked_entity);
+          } else if (appUser.role === 'ambulance') {
+            setCurrentAmbulanceId(appUser.linked_entity);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   // Load hospitals from Supabase
   useEffect(() => {
     const loadHospitals = async () => {
