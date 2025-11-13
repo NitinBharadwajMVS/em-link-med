@@ -611,21 +611,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('auth_uid', authData.user.id)
       .single();
 
-    if (appUserError || !appUser) {
+    // Fallback to Supabase user metadata if app_users row is missing (prevents login block)
+    const meta = (authData.user as any)?.user_metadata || {};
+
+    const resolvedUser = appUser || {
+      username: meta.username || email.split('@')[0],
+      role: meta.role || 'hospital',
+      linked_entity: meta.hospital_id || meta.ambulance_id || null,
+    };
+
+    if (!resolvedUser) {
       throw new Error('User not found');
     }
 
     setCurrentUser({
       id: authData.user.id,
-      username: appUser.username,
-      role: appUser.role,
-      linkedEntity: appUser.linked_entity
+      username: resolvedUser.username,
+      role: resolvedUser.role,
+      linkedEntity: resolvedUser.linked_entity
     });
 
-    if (appUser.role === 'hospital') {
-      setCurrentHospitalId(appUser.linked_entity);
-    } else if (appUser.role === 'ambulance') {
-      setCurrentAmbulanceId(appUser.linked_entity);
+    if (resolvedUser.role === 'hospital') {
+      setCurrentHospitalId(resolvedUser.linked_entity);
+    } else if (resolvedUser.role === 'ambulance') {
+      setCurrentAmbulanceId(resolvedUser.linked_entity);
     }
   };
 
