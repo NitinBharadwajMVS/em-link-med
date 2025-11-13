@@ -64,32 +64,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     restoreSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
         setCurrentHospitalId(null);
         setCurrentAmbulanceId(null);
       } else if (session?.user) {
-        const { data: appUser } = await supabase
-          .from('app_users')
-          .select('*')
-          .eq('auth_uid', session.user.id)
-          .single();
+        // Defer Supabase calls with setTimeout to prevent deadlock
+        setTimeout(async () => {
+          const { data: appUser } = await supabase
+            .from('app_users')
+            .select('*')
+            .eq('auth_uid', session.user.id)
+            .single();
 
-        if (appUser) {
-          setCurrentUser({
-            id: session.user.id,
-            username: appUser.username,
-            role: appUser.role,
-            linkedEntity: appUser.linked_entity
-          });
+          if (appUser) {
+            setCurrentUser({
+              id: session.user.id,
+              username: appUser.username,
+              role: appUser.role,
+              linkedEntity: appUser.linked_entity
+            });
 
-          if (appUser.role === 'hospital') {
-            setCurrentHospitalId(appUser.linked_entity);
-          } else if (appUser.role === 'ambulance') {
-            setCurrentAmbulanceId(appUser.linked_entity);
+            if (appUser.role === 'hospital') {
+              setCurrentHospitalId(appUser.linked_entity);
+            } else if (appUser.role === 'ambulance') {
+              setCurrentAmbulanceId(appUser.linked_entity);
+            }
           }
-        }
+        }, 0);
       }
     });
 
