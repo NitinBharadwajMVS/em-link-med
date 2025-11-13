@@ -45,11 +45,6 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
     let patientId: string;
 
     if (isNewPatient) {
-      if (!formData.name || !formData.age || formData.complaints.length === 0) {
-        toast.error('Please fill all required fields');
-        return;
-      }
-
       const patientData: Patient = {
         id: `P${Date.now()}`,
         name: formData.name,
@@ -180,7 +175,10 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             <Input
               className="bg-ambulance-card border-ambulance-border interactive-input"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                setFormData({ ...formData, name: value });
+              }}
             />
           </div>
           <div>
@@ -189,7 +187,10 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
               type="number"
               className="bg-ambulance-card border-ambulance-border interactive-input"
               value={formData.age}
-              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                setFormData({ ...formData, age: value });
+              }}
             />
           </div>
           <div>
@@ -210,7 +211,10 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             <Input
               className="bg-ambulance-card border-ambulance-border interactive-input"
               value={formData.contact}
-              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                setFormData({ ...formData, contact: value });
+              }}
             />
           </div>
           <div className="col-span-2">
