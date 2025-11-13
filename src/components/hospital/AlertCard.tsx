@@ -70,6 +70,25 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
 
     console.log('Setting up live vitals subscription for ambulance:', alert.ambulanceId);
 
+    // Fetch initial vitals
+    const fetchInitialVitals = async () => {
+      const { data, error } = await supabase
+        .from('live_vitals')
+        .select('*')
+        .eq('ambulance_id', alert.ambulanceId)
+        .maybeSingle();
+
+      if (!error && data) {
+        setLiveVitals({
+          spo2: data.spo2_pct || patient.vitals.spo2,
+          heartRate: data.hr_bpm || patient.vitals.heartRate
+        });
+      }
+    };
+
+    fetchInitialVitals();
+
+    // Subscribe to real-time updates
     const channel = supabase
       .channel(`live-vitals-${alert.ambulanceId}`)
       .on(

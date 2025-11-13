@@ -91,20 +91,39 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
     };
   }, [deviceId, isSimulated, onVitalsUpdate]);
 
-  // Fallback to simulated data if no device
+  // Fallback to simulated data if no device - write to Supabase for hospital visibility
   useEffect(() => {
-    if (!isSimulated) return;
+    if (!isSimulated || !currentAmbulanceId) return;
 
-    const interval = setInterval(() => {
+    const updateSimulatedVitals = async () => {
       const newSpo2 = Math.floor(Math.random() * 5) + 95;
       const newHR = Math.floor(Math.random() * 20) + 65;
+      
       setSpo2(newSpo2);
       setHeartRate(newHR);
       onVitalsUpdate?.(newSpo2, newHR);
-    }, 3000);
+
+      // Write simulated data to Supabase so hospitals can see it
+      await supabase
+        .from('live_vitals')
+        .upsert({
+          device_id: `simulated-${currentAmbulanceId}`,
+          ambulance_id: currentAmbulanceId,
+          spo2_pct: newSpo2,
+          hr_bpm: newHR,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'device_id'
+        });
+    };
+
+    // Initial update
+    updateSimulatedVitals();
+
+    const interval = setInterval(updateSimulatedVitals, 3000);
 
     return () => clearInterval(interval);
-  }, [isSimulated, onVitalsUpdate]);
+  }, [isSimulated, currentAmbulanceId, onVitalsUpdate]);
 
   return (
     <div className="glass-effect p-6 rounded-xl border border-ambulance-border interactive-card group">
