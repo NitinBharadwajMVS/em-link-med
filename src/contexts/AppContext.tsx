@@ -37,9 +37,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadHospitals = async () => {
       const { data, error } = await supabase.from('hospitals').select('*').order('name');
-      if (error) {
-        console.error('Error loading hospitals:', error);
-      } else if (data) {
+      if (!error && data) {
         setHospitals(data as Hospital[]);
       }
     };
@@ -72,9 +70,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           updated_at: string | null;
         }>>();
 
-      if (error) {
-        console.error('Error loading patients:', error);
-      } else if (data) {
+      if (!error && data) {
         setPatients(data.map(p => ({
           id: p.id,
           name: p.name,
@@ -124,9 +120,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           audit_log: any;
         }>>();
 
-      if (error) {
-        console.error('Error loading alerts:', error);
-      } else if (data) {
+      if (!error && data) {
         setAlerts(data.map(alert => ({
           id: alert.id,
           patient: {
@@ -161,8 +155,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!currentUser || !currentHospitalId) return;
 
-    console.log('Setting up realtime for hospital:', currentHospitalId);
-
     const channel = supabase
       .channel('alerts-channel')
       .on(
@@ -174,8 +166,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           filter: `hospital_id=eq.${currentHospitalId}`
         },
         (payload) => {
-          console.log('Realtime alert update:', payload);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const alert = payload.new;
             const mappedAlert: Alert = {
@@ -253,7 +243,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } as PatientInsert).select('id').single<{ id: string }>();
 
     if (error) {
-      console.error('Error adding patient:', error);
       throw error;
     }
 
@@ -280,7 +269,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', patientId);
 
     if (error) {
-      console.error('Error updating patient:', error);
       throw error;
     }
   };
@@ -362,7 +350,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (error) {
-      console.error('Error sending alert:', error);
       throw error;
     }
 
@@ -403,7 +390,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', alertId);
 
     if (error) {
-      console.error('Error updating alert status:', error);
       throw error;
     }
   };
@@ -437,7 +423,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', alertId);
 
     if (error) {
-      console.error('Error completing case:', error);
       throw error;
     }
   };
@@ -528,7 +513,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', alertId);
 
     if (error) {
-      console.error('Error marking hospital unavailable:', error);
       throw error;
     }
   };
@@ -560,7 +544,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (appUserError || !appUser) {
-      console.error('Error loading user info:', appUserError);
       throw new Error('User not found');
     }
 
@@ -592,7 +575,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (error) {
-      console.error('Error adding hospital:', error);
       throw error;
     }
 
