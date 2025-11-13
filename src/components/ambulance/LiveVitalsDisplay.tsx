@@ -15,7 +15,7 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [isSimulated, setIsSimulated] = useState(false);
 
-  // Get device_id for current ambulance
+  // Get device_id for current ambulance and check if real data exists
   useEffect(() => {
     const getDeviceId = async () => {
       if (!currentAmbulanceId) {
@@ -32,7 +32,22 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
       if (error || !data?.device_id) {
         console.log('No device linked, using simulated data');
         setIsSimulated(true);
+        return;
+      }
+
+      // Check if live_vitals data exists for this device
+      const { data: vitalsData, error: vitalsError } = await supabase
+        .from('live_vitals')
+        .select('*')
+        .eq('device_id', data.device_id)
+        .maybeSingle();
+
+      if (vitalsError || !vitalsData) {
+        console.log('No live vitals found for device, using simulated data');
+        setDeviceId(data.device_id);
+        setIsSimulated(true);
       } else {
+        console.log('Real device data found:', data.device_id);
         setDeviceId(data.device_id);
         setIsSimulated(false);
       }
@@ -41,9 +56,11 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
     getDeviceId();
   }, [currentAmbulanceId]);
 
-  // Subscribe to real-time vitals updates if device is linked
+  // Subscribe to real-time vitals updates if device is linked (not simulated)
   useEffect(() => {
     if (!deviceId || isSimulated) return;
+
+    console.log('Setting up real device vitals subscription for:', deviceId);
 
     // Initial fetch
     const fetchVitals = async () => {
@@ -51,7 +68,7 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
         .from('live_vitals')
         .select('*')
         .eq('device_id', deviceId)
-        .single<{ spo2_pct: number | null; hr_bpm: number | null }>();
+        .maybeSingle();
 
       if (!error && data) {
         const newSpo2 = data.spo2_pct || 98;
@@ -70,18 +87,21 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'live_vitals',
           filter: `device_id=eq.${deviceId}`
         },
         (payload) => {
-          const data = payload.new;
-          const newSpo2 = data.spo2_pct || 98;
-          const newHR = data.hr_bpm || 72;
-          setSpo2(newSpo2);
-          setHeartRate(newHR);
-          onVitalsUpdate?.(newSpo2, newHR);
+          console.log('Real device vitals update:', payload);
+          if (payload.new && typeof payload.new === 'object') {
+            const data = payload.new as any;
+            const newSpo2 = data.spo2_pct || 98;
+            const newHR = data.hr_bpm || 72;
+            setSpo2(newSpo2);
+            setHeartRate(newHR);
+            onVitalsUpdate?.(newSpo2, newHR);
+          }
         }
       )
       .subscribe();
@@ -91,9 +111,11 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
     };
   }, [deviceId, isSimulated, onVitalsUpdate]);
 
-  // Fallback to simulated data if no device - write to Supabase for hospital visibility
+  // Generate and write simulated data when no real device exists
   useEffect(() => {
-    if (!isSimulated || !currentAmbulanceId) return;
+    if (!isSimulated || !currentAmbulanceId || !deviceId) return;
+
+    console.log('Starting simulated vitals generation for device:', deviceId);
 
     const updateSimulatedVitals = async () => {
       const newSpo2 = Math.floor(Math.random() * 5) + 95;
@@ -103,11 +125,11 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
       setHeartRate(newHR);
       onVitalsUpdate?.(newSpo2, newHR);
 
-      // Write simulated data to Supabase so hospitals can see it
-      await supabase
+      // Write simulated data to Supabase using the actual device_id
+      const { error } = await supabase
         .from('live_vitals')
         .upsert({
-          device_id: `simulated-${currentAmbulanceId}`,
+          device_id: deviceId,
           ambulance_id: currentAmbulanceId,
           spo2_pct: newSpo2,
           hr_bpm: newHR,
@@ -115,6 +137,12 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
         }, {
           onConflict: 'device_id'
         });
+
+      if (error) {
+        console.error('Error writing simulated vitals:', error);
+      } else {
+        console.log('Simulated vitals written:', { spo2: newSpo2, hr: newHR });
+      }
     };
 
     // Initial update
@@ -123,7 +151,7 @@ export const LiveVitalsDisplay = ({ onVitalsUpdate }: LiveVitalsProps) => {
     const interval = setInterval(updateSimulatedVitals, 3000);
 
     return () => clearInterval(interval);
-  }, [isSimulated, currentAmbulanceId, onVitalsUpdate]);
+  }, [isSimulated, currentAmbulanceId, deviceId, onVitalsUpdate]);
 
   return (
     <div className="glass-effect p-6 rounded-xl border border-ambulance-border interactive-card group">
