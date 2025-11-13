@@ -24,6 +24,7 @@ const AmbulanceLogin = () => {
       toast.success('Login successful');
       navigate('/ambulance');
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error(error.message || 'Invalid credentials');
     }
   };

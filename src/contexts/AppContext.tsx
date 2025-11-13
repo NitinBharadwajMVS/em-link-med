@@ -33,79 +33,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [currentAmbulanceId, setCurrentAmbulanceId] = useState<string | null>(null);
   const [alertsChannel, setAlertsChannel] = useState<RealtimeChannel | null>(null);
 
-  // Restore session on mount and listen for auth changes
-  useEffect(() => {
-    const restoreSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        const { data: appUser } = await supabase
-          .from('app_users')
-          .select('*')
-          .eq('auth_uid', session.user.id)
-          .single();
-
-        if (appUser) {
-          setCurrentUser({
-            id: session.user.id,
-            username: appUser.username,
-            role: appUser.role,
-            linkedEntity: appUser.linked_entity
-          });
-
-          if (appUser.role === 'hospital') {
-            setCurrentHospitalId(appUser.linked_entity);
-          } else if (appUser.role === 'ambulance') {
-            setCurrentAmbulanceId(appUser.linked_entity);
-          }
-        }
-      }
-    };
-
-    restoreSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setCurrentUser(null);
-        setCurrentHospitalId(null);
-        setCurrentAmbulanceId(null);
-      } else if (session?.user) {
-        // Defer Supabase calls with setTimeout to prevent deadlock
-        setTimeout(async () => {
-          const { data: appUser } = await supabase
-            .from('app_users')
-            .select('*')
-            .eq('auth_uid', session.user.id)
-            .single();
-
-          if (appUser) {
-            setCurrentUser({
-              id: session.user.id,
-              username: appUser.username,
-              role: appUser.role,
-              linkedEntity: appUser.linked_entity
-            });
-
-            if (appUser.role === 'hospital') {
-              setCurrentHospitalId(appUser.linked_entity);
-            } else if (appUser.role === 'ambulance') {
-              setCurrentAmbulanceId(appUser.linked_entity);
-            }
-          }
-        }, 0);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   // Load hospitals from Supabase
   useEffect(() => {
     const loadHospitals = async () => {
       const { data, error } = await supabase.from('hospitals').select('*').order('name');
-      if (!error && data) {
+      if (error) {
+        console.error('Error loading hospitals:', error);
+      } else if (data) {
         setHospitals(data as Hospital[]);
       }
     };
@@ -138,7 +72,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           updated_at: string | null;
         }>>();
 
-      if (!error && data) {
+      if (error) {
+        console.error('Error loading patients:', error);
+      } else if (data) {
         setPatients(data.map(p => ({
           id: p.id,
           name: p.name,
@@ -188,7 +124,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           audit_log: any;
         }>>();
 
-      if (!error && data) {
+      if (error) {
+        console.error('Error loading alerts:', error);
+      } else if (data) {
         setAlerts(data.map(alert => ({
           id: alert.id,
           patient: {
@@ -223,6 +161,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!currentUser || !currentHospitalId) return;
 
+    console.log('Setting up realtime for hospital:', currentHospitalId);
+
     const channel = supabase
       .channel('alerts-channel')
       .on(
@@ -234,6 +174,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           filter: `hospital_id=eq.${currentHospitalId}`
         },
         (payload) => {
+          console.log('Realtime alert update:', payload);
+          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const alert = payload.new;
             const mappedAlert: Alert = {
@@ -311,6 +253,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } as PatientInsert).select('id').single<{ id: string }>();
 
     if (error) {
+      console.error('Error adding patient:', error);
       throw error;
     }
 
@@ -337,6 +280,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', patientId);
 
     if (error) {
+      console.error('Error updating patient:', error);
       throw error;
     }
   };
@@ -418,6 +362,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (error) {
+      console.error('Error sending alert:', error);
       throw error;
     }
 
@@ -458,6 +403,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', alertId);
 
     if (error) {
+      console.error('Error updating alert status:', error);
       throw error;
     }
   };
@@ -491,6 +437,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', alertId);
 
     if (error) {
+      console.error('Error completing case:', error);
       throw error;
     }
   };
@@ -581,6 +528,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', alertId);
 
     if (error) {
+      console.error('Error marking hospital unavailable:', error);
       throw error;
     }
   };
@@ -611,30 +559,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .eq('auth_uid', authData.user.id)
       .single();
 
-    // Fallback to Supabase user metadata if app_users row is missing (prevents login block)
-    const meta = (authData.user as any)?.user_metadata || {};
-
-    const resolvedUser = appUser || {
-      username: meta.username || email.split('@')[0],
-      role: meta.role || 'hospital',
-      linked_entity: meta.hospital_id || meta.ambulance_id || null,
-    };
-
-    if (!resolvedUser) {
+    if (appUserError || !appUser) {
+      console.error('Error loading user info:', appUserError);
       throw new Error('User not found');
     }
 
     setCurrentUser({
       id: authData.user.id,
-      username: resolvedUser.username,
-      role: resolvedUser.role,
-      linkedEntity: resolvedUser.linked_entity
+      username: appUser.username,
+      role: appUser.role,
+      linkedEntity: appUser.linked_entity
     });
 
-    if (resolvedUser.role === 'hospital') {
-      setCurrentHospitalId(resolvedUser.linked_entity);
-    } else if (resolvedUser.role === 'ambulance') {
-      setCurrentAmbulanceId(resolvedUser.linked_entity);
+    if (appUser.role === 'hospital') {
+      setCurrentHospitalId(appUser.linked_entity);
+    } else if (appUser.role === 'ambulance') {
+      setCurrentAmbulanceId(appUser.linked_entity);
     }
   };
 
@@ -652,6 +592,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (error) {
+      console.error('Error adding hospital:', error);
       throw error;
     }
 

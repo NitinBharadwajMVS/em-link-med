@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { MultipleSymptomDropdown } from './MultipleSymptomDropdown';
 import { Hospital } from '@/types/patient';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 interface AddHospitalDialogProps {
   open: boolean;
@@ -18,16 +17,6 @@ const availableEquipment = [
   'Ventilator', 'ICU', 'CT Scan', 'MRI', 'X-Ray', 'Oxygen', 
   'Defibrillator', 'Cardiac Monitor', 'Cath Lab', 'Dialysis'
 ];
-
-const hospitalSchema = z.object({
-  name: z.string().trim().min(1, 'Hospital name is required').max(200, 'Hospital name must be less than 200 characters'),
-  address: z.string().trim().min(1, 'Address is required').max(500, 'Address must be less than 500 characters'),
-  contact: z.string().trim().regex(/^\+?[0-9\-\s()]{10,20}$/, 'Invalid contact number format'),
-  distance: z.number().min(0, 'Distance must be positive').max(1000, 'Distance must be less than 1000 km').optional(),
-  latitude: z.number().min(-90, 'Latitude must be between -90 and 90').max(90, 'Latitude must be between -90 and 90'),
-  longitude: z.number().min(-180, 'Longitude must be between -180 and 180').max(180, 'Longitude must be between -180 and 180'),
-  equipment: z.array(z.string()).max(20, 'Maximum 20 equipment items allowed')
-});
 
 export const AddHospitalDialog = ({ open, onOpenChange, onAdd }: AddHospitalDialogProps) => {
   const [formData, setFormData] = useState({
@@ -43,38 +32,25 @@ export const AddHospitalDialog = ({ open, onOpenChange, onAdd }: AddHospitalDial
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const parsedData = {
-      name: formData.name,
-      address: formData.address,
-      contact: formData.contact,
-      distance: formData.distance ? parseFloat(formData.distance) : undefined,
-      latitude: parseFloat(formData.latitude) || 12.9716,
-      longitude: parseFloat(formData.longitude) || 77.5946,
-      equipment: formData.equipment
-    };
-
-    const validation = hospitalSchema.safeParse(parsedData);
-    
-    if (!validation.success) {
-      const firstError = validation.error.errors[0];
-      toast.error(firstError.message);
+    if (!formData.name || !formData.address || !formData.contact) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
     const newHospital: Hospital = {
       id: `custom-${Date.now()}`,
-      name: validation.data.name,
-      address: validation.data.address,
-      contact: validation.data.contact,
-      distance: validation.data.distance || 0,
-      latitude: validation.data.latitude,
-      longitude: validation.data.longitude,
-      equipment: validation.data.equipment,
+      name: formData.name,
+      address: formData.address,
+      contact: formData.contact,
+      distance: parseFloat(formData.distance) || 0,
+      latitude: parseFloat(formData.latitude) || 12.9716,
+      longitude: parseFloat(formData.longitude) || 77.5946,
+      equipment: formData.equipment,
       specialties: [],
     };
 
     onAdd(newHospital);
-    toast.success(`${validation.data.name} added successfully`);
+    toast.success(`${formData.name} added successfully`);
     
     // Reset form
     setFormData({

@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import AmbulanceLogin from "./pages/AmbulanceLogin";
 import HospitalLogin from "./pages/HospitalLogin";
@@ -25,16 +24,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/ambulance-login" element={<AmbulanceLogin />} />
             <Route path="/hospital-login" element={<HospitalLogin />} />
-            <Route path="/ambulance" element={
-              <ProtectedRoute requiredRole="ambulance">
-                <AmbulanceDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/hospital" element={
-              <ProtectedRoute requiredRole="hospital">
-                <HospitalDashboard />
-              </ProtectedRoute>
-            } />
+            <Route path="/ambulance" element={<AmbulanceDashboard />} />
+            <Route path="/hospital" element={<HospitalDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

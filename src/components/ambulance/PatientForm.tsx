@@ -11,24 +11,6 @@ import { useApp } from '@/contexts/AppContext';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { calculateETA } from '@/utils/distanceCalculator';
-import { z } from 'zod';
-
-const patientSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-  age: z.number().int().min(0, "Age must be 0 or greater").max(150, "Age must be 150 or less"),
-  contact: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Contact must be a valid phone number (10-15 digits)"),
-  gender: z.enum(['male', 'female', 'other']),
-  complaints: z.array(z.string().max(200)).min(1, "At least one complaint is required").max(10, "Maximum 10 complaints allowed")
-});
-
-const vitalsSchema = z.object({
-  spo2: z.number().min(0, "SpO2 must be 0 or greater").max(100, "SpO2 cannot exceed 100%"),
-  heartRate: z.number().int().min(20, "Heart rate must be at least 20").max(250, "Heart rate cannot exceed 250"),
-  bloodPressureSys: z.number().int().min(50, "Systolic BP must be at least 50").max(250, "Systolic BP cannot exceed 250"),
-  bloodPressureDia: z.number().int().min(30, "Diastolic BP must be at least 30").max(150, "Diastolic BP cannot exceed 150"),
-  temperature: z.number().min(90, "Temperature must be at least 90°F").max(110, "Temperature cannot exceed 110°F"),
-  gcs: z.number().int().min(3, "GCS must be at least 3").max(15, "GCS cannot exceed 15")
-});
 
 interface PatientFormProps {
   triageLevel: TriageLevel;
@@ -60,27 +42,11 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const handleSendAlert = async () => {
-    // Validate vitals first
-    const vitalsValidation = vitalsSchema.safeParse(vitals);
-    if (!vitalsValidation.success) {
-      toast.error(vitalsValidation.error.errors[0].message);
-      return;
-    }
-
     let patientId: string;
 
     if (isNewPatient) {
-      // Validate patient form data
-      const patientValidation = patientSchema.safeParse({
-        name: formData.name,
-        age: parseInt(formData.age) || 0,
-        contact: formData.contact,
-        gender: formData.gender,
-        complaints: formData.complaints
-      });
-      
-      if (!patientValidation.success) {
-        toast.error(patientValidation.error.errors[0].message);
+      if (!formData.name || !formData.age || formData.complaints.length === 0) {
+        toast.error('Please fill all required fields');
         return;
       }
 
