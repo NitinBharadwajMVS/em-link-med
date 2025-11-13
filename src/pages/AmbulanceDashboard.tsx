@@ -1,25 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TriageButton } from '@/components/ambulance/TriageButton';
 import { PatientForm } from '@/components/ambulance/PatientForm';
 import { PatientHistoryDialog } from '@/components/history/PatientHistoryDialog';
 import { HospitalSelector } from '@/components/ambulance/HospitalSelector';
 import { MultipleSymptomDropdown } from '@/components/ambulance/MultipleSymptomDropdown';
+import { LiveVitalsDisplay } from '@/components/ambulance/LiveVitalsDisplay';
 import { TriageLevel } from '@/types/patient';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Ambulance, CheckCircle, AlertCircle, Clock, Building2, Edit } from 'lucide-react';
+import { LogOut, Ambulance, CheckCircle, AlertCircle, Clock, Building2, Edit, Activity } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { calculateETA } from '@/utils/distanceCalculator';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 const AmbulanceDashboard = () => {
   const [selectedTriage, setSelectedTriage] = useState<TriageLevel | null>(null);
   const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
   const [editingSymptomsAlertId, setEditingSymptomsAlertId] = useState<string | null>(null);
   const [updatedSymptoms, setUpdatedSymptoms] = useState<string[]>([]);
+  const [liveVitalsMap, setLiveVitalsMap] = useState<Record<string, { spo2: number; heartRate: number }>>({});
   const { logout, alerts, completeCase, currentUser, hospitals, changeHospital, addHospital, updatePatient } = useApp();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -27,6 +31,58 @@ const AmbulanceDashboard = () => {
   const activeAlerts = alerts.filter(
     alert => alert.ambulanceId === currentUser?.linkedEntity && alert.status !== 'completed'
   );
+
+  // Subscribe to live vitals for all active alerts
+  useEffect(() => {
+    if (!currentUser?.linkedEntity || activeAlerts.length === 0) return;
+
+    const fetchInitialVitals = async () => {
+      const { data, error } = await supabase
+        .from('live_vitals')
+        .select('*')
+        .eq('ambulance_id', currentUser.linkedEntity)
+        .maybeSingle();
+
+      if (!error && data) {
+        const vitals = { spo2: data.spo2_pct || 98, heartRate: data.hr_bpm || 72 };
+        const newMap: Record<string, { spo2: number; heartRate: number }> = {};
+        activeAlerts.forEach(alert => {
+          newMap[alert.id] = vitals;
+        });
+        setLiveVitalsMap(newMap);
+      }
+    };
+
+    fetchInitialVitals();
+
+    const channel = supabase
+      .channel(`ambulance-live-vitals-${currentUser.linkedEntity}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_vitals',
+          filter: `ambulance_id=eq.${currentUser.linkedEntity}`
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new === 'object') {
+            const data = payload.new as any;
+            const vitals = { spo2: data.spo2_pct || 98, heartRate: data.hr_bpm || 72 };
+            const newMap: Record<string, { spo2: number; heartRate: number }> = {};
+            activeAlerts.forEach(alert => {
+              newMap[alert.id] = vitals;
+            });
+            setLiveVitalsMap(newMap);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.linkedEntity, activeAlerts.length]);
 
   const handleLogout = () => {
     logout();
@@ -147,6 +203,13 @@ const AmbulanceDashboard = () => {
           </Card>
         )}
 
+        {/* Keep live vitals running for all active alerts */}
+        {activeAlerts.length > 0 && (
+          <div style={{ display: 'none' }}>
+            <LiveVitalsDisplay />
+          </div>
+        )}
+
         {activeAlerts.length > 0 && (
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-ambulance-text mb-4">Active Pre-Alerts</h2>
@@ -208,6 +271,37 @@ const AmbulanceDashboard = () => {
                           </div>
                           <div>ETA: {alert.eta} min</div>
                         </div>
+
+                        {/* Live Vitals Display */}
+                        {liveVitalsMap[alert.id] && (
+                          <div className="mb-3 p-3 bg-ambulance-border/30 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Activity className="w-4 h-4 text-stable animate-pulse" />
+                              <span className="text-xs font-semibold">Live Vitals</span>
+                              <Badge variant="outline" className="text-[10px] bg-stable/20 text-stable border-stable">●LIVE</Badge>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="text-center p-2 bg-ambulance-bg/30 rounded">
+                                <div className="text-xs text-muted-foreground">SpO₂</div>
+                                <div className={cn(
+                                  "text-2xl font-bold",
+                                  liveVitalsMap[alert.id].spo2 < 94 ? "text-critical" : "text-stable"
+                                )}>
+                                  {liveVitalsMap[alert.id].spo2}%
+                                </div>
+                              </div>
+                              <div className="text-center p-2 bg-ambulance-bg/30 rounded">
+                                <div className="text-xs text-muted-foreground">Heart Rate</div>
+                                <div className={cn(
+                                  "text-2xl font-bold",
+                                  liveVitalsMap[alert.id].heartRate > 100 ? "text-urgent" : "text-stable"
+                                )}>
+                                  {liveVitalsMap[alert.id].heartRate}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {hospital && (
                           <div className="mb-3 p-3 bg-ambulance-border/30 rounded-lg">

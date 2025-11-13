@@ -62,9 +62,9 @@ export const AlertCard = ({ alert }: AlertCardProps) => {
     setDeclineReason('');
   };
 
-  // Subscribe to live vitals when alert is acknowledged or accepted
+  // Subscribe to live vitals when alert is acknowledged, accepted, or pending
   useEffect(() => {
-    if (alert.status !== 'acknowledged' && alert.status !== 'accepted') {
+    if (alert.status === 'completed' || alert.status === 'declined' || alert.status === 'cancelled') {
       return;
     }
 
