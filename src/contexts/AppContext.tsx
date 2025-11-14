@@ -525,11 +525,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const changeHospital = async (patientId: string, newHospitalId: string, reason: string) => {
+    console.log('🔄 changeHospital called:', { patientId, newHospitalId, reason });
+    
     // Find the existing alert for this patient
     const existingAlert = alerts.find(a => 
       a.patient.id === patientId && 
       (a.status === 'pending' || a.status === 'acknowledged' || a.status === 'accepted')
     );
+
+    console.log('🔍 Found existing alert:', existingAlert?.id, 'Status:', existingAlert?.status);
 
     if (existingAlert) {
       // Mark the old alert as cancelled with reason
@@ -549,7 +553,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         completed_at?: string | null;
       };
 
-      await supabase
+      console.log('❌ Cancelling old alert:', existingAlert.id);
+      const { error: cancelError } = await supabase
         .from('alerts')
         .update({
           status: 'cancelled',
@@ -559,28 +564,54 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         } as AlertUpdate)
         .eq('id', existingAlert.id);
 
+      if (cancelError) {
+        console.error('Error cancelling alert:', cancelError);
+        throw cancelError;
+      }
+      console.log('✅ Old alert cancelled');
+
       type PatientUpdate = {
         current_hospital_id?: string | null;
       };
 
       // Update patient's current hospital
-      await supabase
+      console.log('👤 Updating patient hospital to:', newHospitalId);
+      const { error: patientError } = await supabase
         .from('patients')
         .update({ current_hospital_id: newHospitalId } as PatientUpdate)
         .eq('id', patientId);
 
+      if (patientError) {
+        console.error('Error updating patient:', patientError);
+        throw patientError;
+      }
+      console.log('✅ Patient hospital updated');
+
       // Create new alert at the new hospital
       const newHospital = hospitals.find(h => h.id === newHospitalId);
+      console.log('🏥 New hospital found:', newHospital?.name);
+      
       if (newHospital) {
-        await sendAlert(
-          patientId,
-          existingAlert.ambulanceId,
-          newHospitalId,
-          existingAlert.eta,
-          existingAlert.eta,
-          existingAlert.requiredEquipment
-        );
+        console.log('📤 Sending new alert to hospital:', newHospitalId);
+        try {
+          const result = await sendAlert(
+            patientId,
+            existingAlert.ambulanceId,
+            newHospitalId,
+            existingAlert.eta,
+            existingAlert.eta,
+            existingAlert.requiredEquipment
+          );
+          console.log('✅ New alert sent successfully:', result);
+        } catch (error) {
+          console.error('❌ Error sending new alert:', error);
+          throw error;
+        }
+      } else {
+        console.error('❌ New hospital not found:', newHospitalId);
       }
+    } else {
+      console.error('❌ No existing alert found for patient:', patientId);
     }
   };
 
