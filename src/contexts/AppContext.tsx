@@ -528,10 +528,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     console.log('🔄 changeHospital called:', { patientId, newHospitalId, reason });
     console.log('📋 All alerts:', alerts.map(a => ({ id: a.id, patientId: a.patient.id, status: a.status, ambulance: a.ambulanceId })));
     
-    // Find the existing alert for this patient
+    // Find the existing alert for this patient (including declined ones)
     const existingAlert = alerts.find(a => 
       a.patient.id === patientId && 
-      (a.status === 'pending' || a.status === 'acknowledged' || a.status === 'accepted')
+      a.status !== 'completed' && 
+      a.status !== 'cancelled'
     );
 
     console.log('🔍 Found existing alert:', existingAlert?.id, 'Status:', existingAlert?.status);
