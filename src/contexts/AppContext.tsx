@@ -526,6 +526,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const changeHospital = async (patientId: string, newHospitalId: string, reason: string) => {
     console.log('🔄 changeHospital called:', { patientId, newHospitalId, reason });
+    console.log('📋 All alerts:', alerts.map(a => ({ id: a.id, patientId: a.patient.id, status: a.status, ambulance: a.ambulanceId })));
     
     // Find the existing alert for this patient
     const existingAlert = alerts.find(a => 
@@ -612,6 +613,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     } else {
       console.error('❌ No existing alert found for patient:', patientId);
+      console.error('Available alerts with statuses:', alerts.map(a => `${a.id} (${a.status}) - Patient: ${a.patient.id}`));
     }
   };
 
