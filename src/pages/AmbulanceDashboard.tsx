@@ -102,7 +102,7 @@ const AmbulanceDashboard = () => {
     const newHospital = hospitals.find(h => h.id === newHospitalId);
     
     if (alert && newHospital) {
-      changeHospital(alertId, newHospitalId, 'Ambulance crew changed hospital selection');
+      changeHospital(alert.patient.id, newHospitalId, 'Ambulance crew changed hospital selection');
       toast({
         title: "Hospital Changed",
         description: `Pre-alert resent to ${newHospital.name}`,
