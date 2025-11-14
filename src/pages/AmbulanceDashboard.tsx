@@ -272,6 +272,19 @@ const AmbulanceDashboard = () => {
                           <div>ETA: {alert.eta} min</div>
                         </div>
 
+                        {/* Hospital Change Indicator */}
+                        {alert.previousHospitalIds && alert.previousHospitalIds.length > 0 && (
+                          <div className="mb-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-2">
+                            <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="font-semibold text-yellow-500">Hospital Changed</div>
+                              <div className="text-sm text-muted-foreground">
+                                This patient has been transferred {alert.previousHospitalIds.length} time(s)
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Live Vitals Display */}
                         {liveVitalsMap[alert.id] && (
                           <div className="mb-3 p-3 bg-ambulance-border/30 rounded-lg">

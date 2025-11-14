@@ -157,14 +157,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadAlerts();
   }, [currentUser]);
 
-  // Set up realtime subscription for alerts
+  // Set up realtime subscription for alerts (Hospital view)
   useEffect(() => {
     if (!currentUser || !currentHospitalId) return;
 
     console.log('Setting up realtime for hospital:', currentHospitalId);
 
     const channel = supabase
-      .channel('alerts-channel')
+      .channel('alerts-channel-hospital')
       .on(
         'postgres_changes',
         {
@@ -223,6 +223,73 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       channel.unsubscribe();
     };
   }, [currentUser, currentHospitalId]);
+
+  // Set up realtime subscription for alerts (Ambulance view)
+  useEffect(() => {
+    if (!currentUser || !currentAmbulanceId) return;
+
+    console.log('Setting up realtime for ambulance:', currentAmbulanceId);
+
+    const channel = supabase
+      .channel('alerts-channel-ambulance')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'alerts',
+          filter: `ambulance_id=eq.${currentAmbulanceId}`
+        },
+        (payload) => {
+          console.log('Realtime ambulance alert update:', payload);
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const alert = payload.new;
+            const mappedAlert: Alert = {
+              id: alert.id,
+              patient: {
+                id: alert.id,
+                name: alert.patient_name,
+                age: alert.patient_age || 0,
+                gender: alert.patient_gender as 'male' | 'female' | 'other',
+                contact: alert.patient_contact || '',
+                complaint: alert.patient_complaint || '',
+                vitals: alert.vitals as any,
+                triageLevel: alert.triage_level as any,
+                timestamp: alert.timestamp
+              },
+              ambulanceId: alert.ambulance_id,
+              hospitalId: alert.hospital_id,
+              eta: alert.eta || 0,
+              status: alert.status as any,
+              timestamp: alert.timestamp,
+              completedAt: alert.completed_at || undefined,
+              requiredEquipment: alert.required_equipment || [],
+              declineReason: alert.decline_reason || undefined,
+              previousHospitalIds: alert.previous_hospital_ids || [],
+              auditLog: (alert.audit_log as any) || []
+            };
+
+            setAlerts(prev => {
+              const index = prev.findIndex(a => a.id === mappedAlert.id);
+              if (index >= 0) {
+                const updated = [...prev];
+                updated[index] = mappedAlert;
+                return updated;
+              }
+              return [mappedAlert, ...prev];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    setAlertsChannel(channel);
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [currentUser, currentAmbulanceId]);
 
   const addPatient = async (patient: Patient): Promise<string> => {
     type PatientInsert = {
