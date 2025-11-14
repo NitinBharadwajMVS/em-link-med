@@ -241,7 +241,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           filter: `ambulance_id=eq.${currentAmbulanceId}`
         },
         (payload) => {
-          console.log('Realtime ambulance alert update:', payload);
+          const alert = payload.new as any;
+          console.log('🔔 Realtime ambulance alert event:', {
+            type: payload.eventType,
+            alertId: alert?.id,
+            status: alert?.status,
+            hospital: alert?.hospital_id,
+            fullPayload: payload
+          });
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const alert = payload.new;
@@ -282,11 +289,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔌 Ambulance alerts subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to ambulance alerts');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error subscribing to ambulance alerts');
+        }
+      });
 
     setAlertsChannel(channel);
 
     return () => {
+      console.log('🔌 Unsubscribing from ambulance alerts');
       channel.unsubscribe();
     };
   }, [currentUser, currentAmbulanceId]);
