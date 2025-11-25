@@ -33,10 +33,10 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
   const [vitals, setVitals] = useState<Vitals>({
     spo2: 98,
     heartRate: 72,
-    bloodPressureSys: 120,
-    bloodPressureDia: 80,
-    temperature: 98.6,
-    gcs: 15,
+    bloodPressureSys: 0,
+    bloodPressureDia: 0,
+    temperature: 0,
+    gcs: 0,
   });
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
@@ -258,14 +258,16 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             <Input
               type="number"
               className="bg-ambulance-card border-ambulance-border interactive-input"
-              value={vitals.bloodPressureSys}
-              onChange={(e) => setVitals({ ...vitals, bloodPressureSys: parseInt(e.target.value) })}
+              value={vitals.bloodPressureSys || ''}
+              onChange={(e) => setVitals({ ...vitals, bloodPressureSys: parseInt(e.target.value) || 0 })}
+              placeholder="Sys"
             />
             <Input
               type="number"
               className="bg-ambulance-card border-ambulance-border interactive-input"
-              value={vitals.bloodPressureDia}
-              onChange={(e) => setVitals({ ...vitals, bloodPressureDia: parseInt(e.target.value) })}
+              value={vitals.bloodPressureDia || ''}
+              onChange={(e) => setVitals({ ...vitals, bloodPressureDia: parseInt(e.target.value) || 0 })}
+              placeholder="Dia"
             />
           </div>
         </div>
@@ -275,8 +277,9 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             type="number"
             step="0.1"
             className="bg-ambulance-card border-ambulance-border interactive-input"
-            value={vitals.temperature}
-            onChange={(e) => setVitals({ ...vitals, temperature: parseFloat(e.target.value) })}
+            value={vitals.temperature || ''}
+            onChange={(e) => setVitals({ ...vitals, temperature: parseFloat(e.target.value) || 0 })}
+            placeholder="98.6"
           />
         </div>
         <div>
@@ -286,8 +289,9 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
             min="3"
             max="15"
             className="bg-ambulance-card border-ambulance-border interactive-input"
-            value={vitals.gcs}
-            onChange={(e) => setVitals({ ...vitals, gcs: parseInt(e.target.value) })}
+            value={vitals.gcs || ''}
+            onChange={(e) => setVitals({ ...vitals, gcs: parseInt(e.target.value) || 0 })}
+            placeholder="3-15"
           />
         </div>
       </div>
