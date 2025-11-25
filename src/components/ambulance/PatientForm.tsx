@@ -52,10 +52,6 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
 
     if (isNewPatient) {
       // Validate new patient fields
-      if (!formData.name.trim()) {
-        toast.error('Please enter patient name');
-        return;
-      }
       if (!formData.age || parseInt(formData.age) <= 0) {
         toast.error('Please enter valid age');
         return;
