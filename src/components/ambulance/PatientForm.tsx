@@ -42,9 +42,33 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   const handleSendAlert = async () => {
+    // Validate hospital selection first
+    if (!selectedHospitalId) {
+      toast.error('Please select a hospital');
+      return;
+    }
+
     let patientId: string;
 
     if (isNewPatient) {
+      // Validate new patient fields
+      if (!formData.name.trim()) {
+        toast.error('Please enter patient name');
+        return;
+      }
+      if (!formData.age || parseInt(formData.age) <= 0) {
+        toast.error('Please enter valid age');
+        return;
+      }
+      if (!formData.gender) {
+        toast.error('Please select gender');
+        return;
+      }
+      if (formData.complaints.length === 0) {
+        toast.error('Please select at least one symptom or complaint');
+        return;
+      }
+
       const patientData: Patient = {
         id: `P${Date.now()}`,
         name: formData.name,
@@ -79,11 +103,6 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
         toast.error('Failed to update patient');
         return;
       }
-    }
-
-    if (!selectedHospitalId) {
-      toast.error('Please select a hospital');
-      return;
     }
 
     const selectedHospital = hospitals.find(h => h.id === selectedHospitalId);
@@ -298,8 +317,7 @@ export const PatientForm = ({ triageLevel, onClose }: PatientFormProps) => {
 
       <Button
         onClick={handleSendAlert}
-        disabled={!selectedHospitalId}
-        className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 glow-critical group relative overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 glow-critical group relative overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95"
       >
         <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         <Send className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
